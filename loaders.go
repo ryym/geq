@@ -11,7 +11,11 @@ type MultiScanLoader[Q any] struct {
 	scanners []RowsScanner
 }
 
-func (ms *MultiScanLoader[Q]) Load(ctx context.Context, db *sql.DB) (err error) {
+type QueryRunner interface {
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+}
+
+func (ms *MultiScanLoader[Q]) Load(ctx context.Context, db QueryRunner) (err error) {
 	q := ms.query.Finalize()
 	rows, err := db.QueryContext(ctx, q.Query, q.Args...)
 	if err != nil {
@@ -44,7 +48,7 @@ type SliceLoader[Q, R any] struct {
 	mapper RowMapper[R]
 }
 
-func (l *SliceLoader[Q, R]) Load(ctx context.Context, db *sql.DB) ([]R, error) {
+func (l *SliceLoader[Q, R]) Load(ctx context.Context, db QueryRunner) ([]R, error) {
 	var dest []R
 	scanner := &SliceScanner[R]{mapper: l.mapper, dest: &dest}
 	err := loadBySingleScanner(ctx, db, scanner, l.query)
@@ -60,7 +64,7 @@ type MapLoader[Q, R any, K comparable] struct {
 	key    *Column[K]
 }
 
-func (l *MapLoader[Q, R, K]) Load(ctx context.Context, db *sql.DB) (map[K]R, error) {
+func (l *MapLoader[Q, R, K]) Load(ctx context.Context, db QueryRunner) (map[K]R, error) {
 	var dest map[K]R
 	scanner := &MapScanner[R, K]{mapper: l.mapper, key: l.key, dest: &dest}
 	err := loadBySingleScanner(ctx, db, scanner, l.query)
@@ -70,7 +74,7 @@ func (l *MapLoader[Q, R, K]) Load(ctx context.Context, db *sql.DB) (map[K]R, err
 	return dest, nil
 }
 
-func loadBySingleScanner[Q any](ctx context.Context, db *sql.DB, s RowsScanner, q *Query[Q]) (err error) {
+func loadBySingleScanner[Q any](ctx context.Context, db QueryRunner, s RowsScanner, q *Query[Q]) (err error) {
 	fq := q.Finalize()
 	rows, err := db.QueryContext(ctx, fq.Query, fq.Args...)
 	if err != nil {
