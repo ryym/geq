@@ -1,0 +1,90 @@
+package tests
+
+import "github.com/ryym/geq"
+
+type User struct {
+	ID   int64
+	Name string
+}
+type Post struct {
+	ID       int64
+	AuthorID int64
+	Title    string
+}
+
+type UsersTable struct {
+	ID      *geq.Column[int64]
+	Name    *geq.Column[string]
+	columns []geq.Selection
+}
+
+func NewUsersTable() *UsersTable {
+	t := &UsersTable{
+		ID:   &geq.Column[int64]{TableName: "users", ColumnName: "id"},
+		Name: &geq.Column[string]{TableName: "users", ColumnName: "name"},
+	}
+	t.columns = []geq.Selection{t.ID, t.Name}
+	return t
+}
+
+func (t *UsersTable) TableName() string {
+	return "users"
+}
+
+func (t *UsersTable) FieldPtrs(u *User) []any {
+	return []any{&u.ID, &u.Name}
+}
+
+func (t *UsersTable) Selections() []geq.Selection {
+	return t.columns
+}
+
+func (t *UsersTable) Query() *geq.Query[User] {
+	return geq.NewQuery(t)
+}
+
+type PostsTable struct {
+	ID       *geq.Column[int64]
+	AuthorID *geq.Column[int64]
+	Title    *geq.Column[string]
+	columns  []geq.Selection
+}
+
+func NewPostsTable() *PostsTable {
+	t := &PostsTable{
+		ID:       &geq.Column[int64]{TableName: "posts", ColumnName: "id"},
+		AuthorID: &geq.Column[int64]{TableName: "posts", ColumnName: "author_id"},
+		Title:    &geq.Column[string]{TableName: "posts", ColumnName: "title"},
+	}
+	t.columns = []geq.Selection{t.ID, t.AuthorID, t.Title}
+	return t
+}
+
+func (t *PostsTable) TableName() string {
+	return "posts"
+}
+
+func (t *PostsTable) FieldPtrs(p *Post) []any {
+	return []any{&p.ID, &p.AuthorID, &p.Title}
+}
+
+func (t *PostsTable) Selections() []geq.Selection {
+	return t.columns
+}
+
+func (t *PostsTable) Query() *geq.Query[Post] {
+	return geq.NewQuery(t)
+}
+
+type QueryBuilder struct {
+	Users *UsersTable
+	Posts *PostsTable
+}
+
+func NewQueryBuilder() *QueryBuilder {
+	b := &QueryBuilder{
+		Users: NewUsersTable(),
+		Posts: NewPostsTable(),
+	}
+	return b
+}
