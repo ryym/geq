@@ -32,6 +32,11 @@ func (c *Column[F]) SelectionName() string {
 	return fmt.Sprintf("%s.%s", c.TableName, c.ColumnName)
 }
 
+type AnyRelship interface {
+	RightTableName() string
+	JoinColumns() (left Selection, right Selection)
+}
+
 type Relship[R, C any] struct {
 	tableR Table[R]
 	colL   *Column[C]
@@ -42,6 +47,14 @@ func NewRelship[R, C any](tableR Table[R], colL, colR *Column[C]) *Relship[R, C]
 	return &Relship[R, C]{tableR: tableR, colL: colL, colR: colR}
 }
 
+func (r *Relship[R, C]) RightTableName() string {
+	return r.tableR.TableName()
+}
+
+func (r *Relship[R, C]) JoinColumns() (left Selection, right Selection) {
+	return r.colL, r.colR
+}
+
 type FinalQuery struct {
 	Query string
 	Args  []any
@@ -50,6 +63,7 @@ type FinalQuery struct {
 type Query[R any] struct {
 	selections []Selection
 	from       Table[R]
+	innerJoins []string    // For now.
 	wheres     []string    // For now.
 	orders     []Selection // For now ASC only.
 	args       []any
@@ -57,6 +71,19 @@ type Query[R any] struct {
 
 func NewQuery[R any](from Table[R]) *Query[R] {
 	return &Query[R]{selections: from.Selections(), from: from}
+}
+
+func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
+	for _, r := range relships {
+		var sb strings.Builder
+		colL, colR := r.JoinColumns()
+		fmt.Fprintf(
+			&sb, " INNER JOIN %s ON %s = %s",
+			r.RightTableName(), colL.SelectionName(), colR.SelectionName(),
+		)
+		q.innerJoins = append(q.innerJoins, sb.String())
+	}
+	return q
 }
 
 func (q *Query[R]) AppendWhere(wheres ...string) *Query[R] {
@@ -84,6 +111,12 @@ func (q *Query[R]) Finalize() *FinalQuery {
 	}
 	sb.WriteString(" FROM ")
 	sb.WriteString(q.from.TableName())
+
+	if len(q.innerJoins) > 0 {
+		for _, j := range q.innerJoins {
+			sb.WriteString(j)
+		}
+	}
 
 	if len(q.wheres) > 0 {
 		sb.WriteString(" WHERE ")

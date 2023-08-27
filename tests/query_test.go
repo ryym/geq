@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -35,6 +36,25 @@ func TestBuiltQueries(t *testing.T) {
 				want := newFinalQuery(
 					"SELECT posts.id,posts.author_id,posts.title FROM posts WHERE posts.author_id IN (?,?)",
 					int64(2), int64(3),
+				)
+				if diff := cmp.Diff(got, want); diff != "" {
+					t.Errorf("wrong final query:%s", diff)
+					return false
+				}
+				return true
+			},
+		},
+		{
+			name: "select with join using relationship",
+			run: func() bool {
+				q := b.Posts.Query().Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID)
+				got := q.Finalize()
+				want := newFinalQuery(
+					strings.Join([]string{
+						"SELECT posts.id,posts.author_id,posts.title FROM posts",
+						"INNER JOIN users ON posts.author_id = users.id",
+						"ORDER BY posts.author_id",
+					}, " "),
 				)
 				if diff := cmp.Diff(got, want); diff != "" {
 					t.Errorf("wrong final query:%s", diff)
