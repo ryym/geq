@@ -48,6 +48,8 @@ type PostsTable struct {
 	AuthorID *geq.Column[int64]
 	Title    *geq.Column[string]
 	columns  []geq.Selection
+
+	Author *geq.Relship[User, int64]
 }
 
 func NewPostsTable() *PostsTable {
@@ -86,5 +88,6 @@ func NewQueryBuilder() *QueryBuilder {
 		Users: NewUsersTable(),
 		Posts: NewPostsTable(),
 	}
+	b.Posts.Author = geq.NewRelship(b.Users, b.Posts.AuthorID, b.Users.ID)
 	return b
 }

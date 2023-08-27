@@ -32,6 +32,16 @@ func (c *Column[F]) SelectionName() string {
 	return fmt.Sprintf("%s.%s", c.TableName, c.ColumnName)
 }
 
+type Relship[R, C any] struct {
+	tableR Table[R]
+	colL   *Column[C]
+	colR   *Column[C]
+}
+
+func NewRelship[R, C any](tableR Table[R], colL, colR *Column[C]) *Relship[R, C] {
+	return &Relship[R, C]{tableR: tableR, colL: colL, colR: colR}
+}
+
 type FinalQuery struct {
 	Query string
 	Args  []any
@@ -40,11 +50,22 @@ type FinalQuery struct {
 type Query[R any] struct {
 	selections []Selection
 	from       Table[R]
+	wheres     []string    // For now.
 	orders     []Selection // For now ASC only.
+	args       []any
 }
 
 func NewQuery[R any](from Table[R]) *Query[R] {
 	return &Query[R]{selections: from.Selections(), from: from}
+}
+
+func (q *Query[R]) AppendWhere(wheres ...string) *Query[R] {
+	q.wheres = append(q.wheres, wheres...)
+	return q
+}
+
+func (q *Query[R]) AppendArgs(args ...any) {
+	q.args = append(q.args, args...)
 }
 
 func (q *Query[R]) OrderBy(orders ...Selection) *Query[R] {
@@ -64,6 +85,16 @@ func (q *Query[R]) Finalize() *FinalQuery {
 	sb.WriteString(" FROM ")
 	sb.WriteString(q.from.TableName())
 
+	if len(q.wheres) > 0 {
+		sb.WriteString(" WHERE ")
+		for i, w := range q.wheres {
+			if i > 0 {
+				sb.WriteString(" AND ")
+			}
+			sb.WriteString(w)
+		}
+	}
+
 	if len(q.orders) > 0 {
 		sb.WriteString(" ORDER BY ")
 		sb.WriteRune(' ')
@@ -77,6 +108,6 @@ func (q *Query[R]) Finalize() *FinalQuery {
 
 	return &FinalQuery{
 		Query: sb.String(),
-		Args:  nil,
+		Args:  q.args,
 	}
 }

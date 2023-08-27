@@ -1,5 +1,10 @@
 package geq
 
+import (
+	"fmt"
+	"strings"
+)
+
 func SelectSlice[R any](q *Query[R]) *SliceLoader[R, R] {
 	return &SliceLoader[R, R]{query: q, mapper: q.from}
 }
@@ -23,4 +28,27 @@ func ToSlice[R any](table Table[R], dest *[]R) *SliceScanner[R] {
 
 func ToMap[R any, K comparable](table Table[R], key TypedSelection[K], dest *map[K]R) *MapScanner[R, K] {
 	return &MapScanner[R, K]{mapper: table, dest: dest, key: key}
+}
+
+func QueryVia[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Query[T] {
+	sels := relship.tableR.Selections()
+	colIdx := selectionIndex(sels[0], sels, relship.colR)
+	if colIdx < 0 {
+		panic("right table column not in selections")
+	}
+
+	keys := make([]any, len(srcs))
+	for i, s := range srcs {
+		ptrs := relship.tableR.FieldPtrs(&s)
+		ptr := ptrs[colIdx]
+		keys[i] = *ptr.(*C)
+	}
+
+	placeholders := strings.Repeat(",?", len(keys))[1:]
+	q := NewQuery(from)
+	where := fmt.Sprintf("%s IN (%s)", relship.colL.SelectionName(), placeholders)
+	q.AppendWhere(where)
+	q.AppendArgs(keys...)
+
+	return q
 }
