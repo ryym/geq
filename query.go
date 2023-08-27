@@ -19,6 +19,10 @@ type Selection interface {
 	SelectionName() string
 }
 
+type TypedSelection[F any] interface {
+	Selection
+}
+
 type Column[F any] struct {
 	TableName  string
 	ColumnName string
