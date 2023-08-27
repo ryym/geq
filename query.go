@@ -36,10 +36,16 @@ type FinalQuery struct {
 type Query[R any] struct {
 	selections []Selection
 	from       Table[R]
+	orders     []Selection // For now ASC only.
 }
 
 func NewQuery[R any](from Table[R]) *Query[R] {
 	return &Query[R]{selections: from.Selections(), from: from}
+}
+
+func (q *Query[R]) OrderBy(orders ...Selection) *Query[R] {
+	q.orders = orders
+	return q
 }
 
 func (q *Query[R]) Finalize() *FinalQuery {
@@ -53,9 +59,16 @@ func (q *Query[R]) Finalize() *FinalQuery {
 	}
 	sb.WriteString(" FROM ")
 	sb.WriteString(q.from.TableName())
-	if q.raw != nil {
-		sb.WriteString(" ")
-		sb.WriteString(q.raw.String())
+
+	if len(q.orders) > 0 {
+		sb.WriteString(" ORDER BY ")
+		sb.WriteRune(' ')
+		for i, sel := range q.orders {
+			if i > 0 {
+				sb.WriteRune(',')
+			}
+			sb.WriteString(sel.SelectionName())
+		}
 	}
 
 	return &FinalQuery{
