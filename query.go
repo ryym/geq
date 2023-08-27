@@ -97,7 +97,6 @@ func (q *Query[R]) Finalize() *FinalQuery {
 
 	if len(q.orders) > 0 {
 		sb.WriteString(" ORDER BY ")
-		sb.WriteRune(' ')
 		for i, sel := range q.orders {
 			if i > 0 {
 				sb.WriteRune(',')
