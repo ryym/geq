@@ -23,11 +23,7 @@ func TestResultMappings(t *testing.T) {
 	b := NewQueryBuilder()
 	ctx := context.Background()
 
-	// Define test cases.
-	cases := []struct {
-		name string
-		run  func() bool
-	}{
+	runTestCases(t, []testCase{
 		{
 			name: "select into single slice",
 			run: func() bool {
@@ -110,13 +106,5 @@ func TestResultMappings(t *testing.T) {
 				return true
 			},
 		},
-	}
-
-	// Run test cases.
-	for i, c := range cases {
-		ok := c.run()
-		if !ok {
-			t.Logf("failed: case[%d] %s", i, c.name)
-		}
-	}
+	})
 }
