@@ -3,6 +3,7 @@ package geq
 import (
 	"context"
 	"database/sql"
+	"fmt"
 )
 
 type MultiScanLoader[Q any] struct {
@@ -20,7 +21,10 @@ func (ms *MultiScanLoader[Q]) Load(ctx context.Context, db *sql.DB) (err error) 
 		allPtrs := make([]any, 0)
 		ptrGroups := make([][]any, len(ms.scanners))
 		for i, s := range ms.scanners {
-			ptrs := s.BeforeEachScan(idx, ms.query.selections)
+			ptrs, err := s.BeforeEachScan(idx, ms.query.selections)
+			if err != nil {
+				return fmt.Errorf("scan[%d] failed to prepare: %w", i, err)
+			}
 			ptrGroups[i] = ptrs
 			allPtrs = append(allPtrs, ptrs...)
 		}
@@ -73,7 +77,10 @@ func loadBySingleScanner[Q any](ctx context.Context, db *sql.DB, s RowsScanner, 
 		return err
 	}
 	for i := 0; rows.Next(); i++ {
-		ptrs := s.BeforeEachScan(i, q.selections)
+		ptrs, err := s.BeforeEachScan(i, q.selections)
+		if err != nil {
+			return err
+		}
 		err = rows.Scan(ptrs...)
 		if err != nil {
 			return err
