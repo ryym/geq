@@ -1,0 +1,12 @@
+# Docker compose for test
+
+version: '3'
+services:
+  mysql:
+    image: mysql:8.1
+    ports:
+      - '3990:3306'
+    volumes:
+      - ./db/mysql:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
