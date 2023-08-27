@@ -1,5 +1,7 @@
 package geq
 
+import "errors"
+
 type RowsScanner interface {
 	Selections() []Selection
 	BeforeEachScan(idx int, sels []Selection) (ptrs []any, err error)
@@ -41,7 +43,11 @@ func (s *MapScanner[R, K]) Selections() []Selection {
 
 func (s *MapScanner[R, K]) BeforeEachScan(idx int, sels []Selection) (ptrs []any, err error) {
 	if idx == 0 {
-		s.keyIdx = selectionIndex(s.Selections()[0], sels, s.key)
+		ki := selectionIndex(s.Selections()[0], sels, s.key)
+		if ki == -1 {
+			return nil, errors.New("failed to scan as map: key not found in selections")
+		}
+		s.keyIdx = ki
 		*s.dest = make(map[K]R)
 	}
 	s.row = new(R)
