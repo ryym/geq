@@ -16,25 +16,17 @@ type Table[R any] interface {
 }
 
 type Selection interface {
-	SelectionName() string
+	Expr() Expr
+	Alias() string
 }
 
 type TypedSelection[F any] interface {
 	Selection
 }
 
-type Column[F any] struct {
-	TableName  string
-	ColumnName string
-}
-
-func (c *Column[F]) SelectionName() string {
-	return fmt.Sprintf("%s.%s", c.TableName, c.ColumnName)
-}
-
 type AnyRelship interface {
 	RightTableName() string
-	JoinColumns() (left Selection, right Selection)
+	JoinColumns() (left Expr, right Expr)
 }
 
 type Relship[R, C any] struct {
@@ -51,7 +43,7 @@ func (r *Relship[R, C]) RightTableName() string {
 	return r.tableR.TableName()
 }
 
-func (r *Relship[R, C]) JoinColumns() (left Selection, right Selection) {
+func (r *Relship[R, C]) JoinColumns() (left Expr, right Expr) {
 	return r.colL, r.colR
 }
 
@@ -63,9 +55,9 @@ type FinalQuery struct {
 type Query[R any] struct {
 	selections []Selection
 	from       Table[R]
-	innerJoins []string    // For now.
-	wheres     []string    // For now.
-	orders     []Selection // For now ASC only.
+	innerJoins []AnyRelship // For now.
+	wheres     []string     // For now.
+	orders     []Expr       // For now ASC only.
 	args       []any
 }
 
@@ -74,15 +66,7 @@ func NewQuery[R any](from Table[R]) *Query[R] {
 }
 
 func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
-	for _, r := range relships {
-		var sb strings.Builder
-		colL, colR := r.JoinColumns()
-		fmt.Fprintf(
-			&sb, " INNER JOIN %s ON %s = %s",
-			r.RightTableName(), colL.SelectionName(), colR.SelectionName(),
-		)
-		q.innerJoins = append(q.innerJoins, sb.String())
-	}
+	q.innerJoins = append(q.innerJoins, relships...)
 	return q
 }
 
@@ -95,26 +79,44 @@ func (q *Query[R]) AppendArgs(args ...any) {
 	q.args = append(q.args, args...)
 }
 
-func (q *Query[R]) OrderBy(orders ...Selection) *Query[R] {
+func (q *Query[R]) OrderBy(orders ...Expr) *Query[R] {
 	q.orders = orders
 	return q
 }
 
 func (q *Query[R]) Finalize() *FinalQuery {
 	var sb strings.Builder
+
+	appendQuery := func(s string, args []any) {
+		sb.WriteString(s)
+		q.args = append(q.args, args...)
+	}
+
 	sb.WriteString("SELECT ")
 	for i, sel := range q.selections {
 		if i > 0 {
 			sb.WriteRune(',')
 		}
-		sb.WriteString(sel.SelectionName())
+		p := buildExprPart(sel.Expr())
+		appendQuery(p.String(), p.args)
+		alias := sel.Alias()
+		if alias != "" {
+			fmt.Fprintf(&sb, "AS %s", alias)
+		}
 	}
+
 	sb.WriteString(" FROM ")
 	sb.WriteString(q.from.TableName())
 
 	if len(q.innerJoins) > 0 {
-		for _, j := range q.innerJoins {
-			sb.WriteString(j)
+		for _, r := range q.innerJoins {
+			fmt.Fprintf(&sb, " INNER JOIN %s ON ", r.RightTableName())
+			colL, colR := r.JoinColumns()
+			partL := buildExprPart(colL)
+			partR := buildExprPart(colR)
+			appendQuery(partL.String(), partL.args)
+			sb.WriteString(" = ")
+			appendQuery(partR.String(), partR.args)
 		}
 	}
 
@@ -130,11 +132,12 @@ func (q *Query[R]) Finalize() *FinalQuery {
 
 	if len(q.orders) > 0 {
 		sb.WriteString(" ORDER BY ")
-		for i, sel := range q.orders {
+		for i, expr := range q.orders {
 			if i > 0 {
 				sb.WriteRune(',')
 			}
-			sb.WriteString(sel.SelectionName())
+			p := buildExprPart(expr)
+			appendQuery(p.String(), p.args)
 		}
 	}
 
@@ -142,4 +145,13 @@ func (q *Query[R]) Finalize() *FinalQuery {
 		Query: sb.String(),
 		Args:  q.args,
 	}
+}
+
+type queryPart struct {
+	sb   *strings.Builder
+	args []any
+}
+
+func (p *queryPart) String() string {
+	return p.sb.String()
 }

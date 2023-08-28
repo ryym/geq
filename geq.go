@@ -46,7 +46,7 @@ func QueryVia[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Que
 
 	placeholders := strings.Repeat(",?", len(keys))[1:]
 	q := NewQuery(from)
-	where := fmt.Sprintf("%s IN (%s)", relship.colL.SelectionName(), placeholders)
+	where := fmt.Sprintf("%s IN (%s)", buildExprPart(relship.colL).String(), placeholders)
 	q.AppendWhere(where)
 	q.AppendArgs(keys...)
 
