@@ -20,8 +20,8 @@ type UsersTable struct {
 
 func NewUsersTable() *UsersTable {
 	t := &UsersTable{
-		ID:   &geq.Column[int64]{TableName: "users", ColumnName: "id"},
-		Name: &geq.Column[string]{TableName: "users", ColumnName: "name"},
+		ID:   geq.NewColumn[int64]("users", "id"),
+		Name: geq.NewColumn[string]("users", "name"),
 	}
 	t.columns = []geq.Selection{t.ID, t.Name}
 	return t
@@ -54,9 +54,9 @@ type PostsTable struct {
 
 func NewPostsTable() *PostsTable {
 	t := &PostsTable{
-		ID:       &geq.Column[int64]{TableName: "posts", ColumnName: "id"},
-		AuthorID: &geq.Column[int64]{TableName: "posts", ColumnName: "author_id"},
-		Title:    &geq.Column[string]{TableName: "posts", ColumnName: "title"},
+		ID:       geq.NewColumn[int64]("posts", "id"),
+		AuthorID: geq.NewColumn[int64]("posts", "author_id"),
+		Title:    geq.NewColumn[string]("posts", "title"),
 	}
 	t.columns = []geq.Selection{t.ID, t.AuthorID, t.Title}
 	return t

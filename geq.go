@@ -52,3 +52,9 @@ func QueryVia[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Que
 
 	return q
 }
+
+func Select(sels ...Selection) *Query[any] {
+	q := NewQuery[any](nil)
+	q.selections = sels
+	return q
+}

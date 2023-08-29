@@ -62,7 +62,11 @@ type Query[R any] struct {
 }
 
 func NewQuery[R any](from Table[R]) *Query[R] {
-	return &Query[R]{selections: from.Selections(), from: from}
+	var sels []Selection
+	if from != nil {
+		sels = from.Selections()
+	}
+	return &Query[R]{selections: sels, from: from}
 }
 
 func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
@@ -95,18 +99,20 @@ func (q *Query[R]) Finalize() *FinalQuery {
 	sb.WriteString("SELECT ")
 	for i, sel := range q.selections {
 		if i > 0 {
-			sb.WriteRune(',')
+			sb.WriteString(", ")
 		}
 		p := buildExprPart(sel.Expr())
 		appendQuery(p.String(), p.args)
 		alias := sel.Alias()
 		if alias != "" {
-			fmt.Fprintf(&sb, "AS %s", alias)
+			fmt.Fprintf(&sb, " AS %s", alias)
 		}
 	}
 
-	sb.WriteString(" FROM ")
-	sb.WriteString(q.from.TableName())
+	if q.from != nil {
+		sb.WriteString(" FROM ")
+		sb.WriteString(q.from.TableName())
+	}
 
 	if len(q.innerJoins) > 0 {
 		for _, r := range q.innerJoins {
