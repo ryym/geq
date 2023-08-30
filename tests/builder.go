@@ -39,10 +39,6 @@ func (t *UsersTable) Selections() []geq.Selection {
 	return t.columns
 }
 
-func (t *UsersTable) Query() *geq.Query[User] {
-	return geq.NewQuery(t)
-}
-
 type PostsTable struct {
 	ID       *geq.Column[int64]
 	AuthorID *geq.Column[int64]
@@ -72,10 +68,6 @@ func (t *PostsTable) FieldPtrs(p *Post) []any {
 
 func (t *PostsTable) Selections() []geq.Selection {
 	return t.columns
-}
-
-func (t *PostsTable) Query() *geq.Query[Post] {
-	return geq.NewQuery(t)
 }
 
 type QueryBuilder struct {

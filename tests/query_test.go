@@ -15,7 +15,7 @@ func TestBuiltQueries(t *testing.T) {
 		{
 			name: "basic select",
 			run: func() bool {
-				got := b.Users.Query().Finalize()
+				got := geq.From(b.Users).Finalize()
 				want := newFinalQuery("SELECT users.id, users.name FROM users")
 				if diff := cmp.Diff(got, want); diff != "" {
 					t.Errorf("wrong final query:%s", diff)
@@ -31,7 +31,7 @@ func TestBuiltQueries(t *testing.T) {
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
 				}
-				q := geq.QueryVia(users, b.Posts, b.Posts.Author)
+				q := geq.Via(users, b.Posts, b.Posts.Author)
 				got := q.Finalize()
 				want := newFinalQuery(
 					"SELECT posts.id, posts.author_id, posts.title FROM posts WHERE posts.author_id IN (?,?)",
@@ -47,7 +47,7 @@ func TestBuiltQueries(t *testing.T) {
 		{
 			name: "select with join using relationship",
 			run: func() bool {
-				q := b.Posts.Query().Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID)
+				q := geq.From(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID)
 				got := q.Finalize()
 				want := newFinalQuery(
 					strings.Join([]string{
@@ -66,7 +66,7 @@ func TestBuiltQueries(t *testing.T) {
 		{
 			name: "select expressions",
 			run: func() bool {
-				q := geq.Select(
+				q := geq.FromNothing().Select(
 					b.Users.ID,
 					b.Users.Name.As("foo"),
 					b.Posts.ID.Eq(3),

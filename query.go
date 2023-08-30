@@ -69,6 +69,11 @@ func NewQuery[R any](from Table[R]) *Query[R] {
 	return &Query[R]{selections: sels, from: from}
 }
 
+func (q *Query[R]) Select(sels ...Selection) *Query[R] {
+	q.selections = sels
+	return q
+}
+
 func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
 	q.innerJoins = append(q.innerJoins, relships...)
 	return q
