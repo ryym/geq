@@ -61,7 +61,7 @@ type Query[R any] struct {
 	args       []any
 }
 
-func NewQuery[R any](from Table[R]) *Query[R] {
+func newQuery[R any](from Table[R]) *Query[R] {
 	var sels []Selection
 	if from != nil {
 		sels = from.Selections()

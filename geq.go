@@ -45,7 +45,7 @@ func Via[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Query[T]
 	}
 
 	placeholders := strings.Repeat(",?", len(keys))[1:]
-	q := NewQuery(from)
+	q := newQuery(from)
 	where := fmt.Sprintf("%s IN (%s)", buildExprPart(relship.colL).String(), placeholders)
 	q.AppendWhere(where)
 	q.AppendArgs(keys...)
@@ -54,9 +54,9 @@ func Via[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Query[T]
 }
 
 func From[R any](table Table[R]) *Query[R] {
-	return NewQuery(table)
+	return newQuery(table)
 }
 
 func FromNothing() *Query[struct{}] {
-	return NewQuery[struct{}](nil)
+	return newQuery[struct{}](nil)
 }
