@@ -57,6 +57,7 @@ type Query[R any] struct {
 	from       Table[R]
 	innerJoins []AnyRelship // For now.
 	wheres     []Expr
+	groups     []Expr
 	orders     []Expr // For now ASC only.
 	limit      uint
 	args       []any
@@ -82,6 +83,11 @@ func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
 
 func (q *Query[R]) Where(exprs ...Expr) *Query[R] {
 	q.wheres = append(q.wheres, exprs...)
+	return q
+}
+
+func (q *Query[R]) GroupBy(exprs ...Expr) *Query[R] {
+	q.groups = append(q.groups, exprs...)
 	return q
 }
 
@@ -135,11 +141,22 @@ func (q *Query[R]) Finalize() *FinalQuery {
 
 	if len(q.wheres) > 0 {
 		sb.WriteString(" WHERE ")
-		for i, w := range q.wheres {
+		for i, e := range q.wheres {
 			if i > 0 {
 				sb.WriteString(" AND ")
 			}
-			part := buildExprPart(w)
+			part := buildExprPart(e)
+			appendQuery(part.String(), part.args)
+		}
+	}
+
+	if len(q.groups) > 0 {
+		sb.WriteString(" GROUP BY ")
+		for i, e := range q.groups {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			part := buildExprPart(e)
 			appendQuery(part.String(), part.args)
 		}
 	}
