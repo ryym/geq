@@ -17,12 +17,12 @@ func AsThese[Q any](q *Query[Q], scanners ...RowsScanner) *MultiScanLoader[Q] {
 	return &MultiScanLoader[Q]{query: q, scanners: scanners}
 }
 
-func ToSlice[R any](table Table[R], dest *[]R) *SliceScanner[R] {
-	return &SliceScanner[R]{mapper: table, dest: dest}
+func ToSlice[R any](mapper RowMapper[R], dest *[]R) *SliceScanner[R] {
+	return &SliceScanner[R]{mapper: mapper, dest: dest}
 }
 
-func ToMap[R any, K comparable](table Table[R], key TypedSelection[K], dest *map[K]R) *MapScanner[R, K] {
-	return &MapScanner[R, K]{mapper: table, dest: dest, key: key}
+func ToMap[R any, K comparable](mapper RowMapper[R], key TypedSelection[K], dest *map[K]R) *MapScanner[R, K] {
+	return &MapScanner[R, K]{mapper: mapper, dest: dest, key: key}
 }
 
 func Via[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Query[T] {

@@ -58,6 +58,7 @@ type Query[R any] struct {
 	innerJoins []AnyRelship // For now.
 	wheres     []Expr
 	orders     []Expr // For now ASC only.
+	limit      uint
 	args       []any
 }
 
@@ -86,6 +87,11 @@ func (q *Query[R]) Where(exprs ...Expr) *Query[R] {
 
 func (q *Query[R]) OrderBy(orders ...Expr) *Query[R] {
 	q.orders = orders
+	return q
+}
+
+func (q *Query[R]) Limit(n uint) *Query[R] {
+	q.limit = n
 	return q
 }
 
@@ -147,6 +153,10 @@ func (q *Query[R]) Finalize() *FinalQuery {
 			p := buildExprPart(expr)
 			appendQuery(p.String(), p.args)
 		}
+	}
+
+	if q.limit > 0 {
+		fmt.Fprintf(&sb, " LIMIT %d", q.limit)
 	}
 
 	return &FinalQuery{

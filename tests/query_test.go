@@ -84,6 +84,19 @@ func TestBuiltQueries(t *testing.T) {
 				return true
 			},
 		},
+		{
+			name: "select with limit",
+			run: func() bool {
+				q := geq.From(b.Users).Select(b.Users.ID).Limit(2)
+				got := q.Finalize()
+				want := newFinalQuery("SELECT users.id FROM users LIMIT 2")
+				if diff := cmp.Diff(got, want); diff != "" {
+					t.Errorf("wrong final query:%s", diff)
+					return false
+				}
+				return true
+			},
+		},
 	})
 }
 
