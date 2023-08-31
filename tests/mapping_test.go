@@ -28,7 +28,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "select into single slice",
 			run: func() bool {
-				q := geq.From(b.Users).OrderBy(b.Users.ID)
+				q := b.From(b.Users).OrderBy(b.Users.ID)
 				var users []mdl.User
 				err := geq.AsThese(q, geq.ToSlice(b.Users, &users)).Load(ctx, db)
 				if err != nil {
@@ -49,7 +49,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "select into single map",
 			run: func() bool {
-				q := geq.From(b.Users).OrderBy(b.Users.ID)
+				q := b.From(b.Users).OrderBy(b.Users.ID)
 				var userMap map[int64]mdl.User
 				err := geq.AsThese(q, geq.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
 				if err != nil {
@@ -70,7 +70,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "load as single slice",
 			run: func() bool {
-				q := geq.From(b.Users).OrderBy(b.Users.ID)
+				q := b.From(b.Users).OrderBy(b.Users.ID)
 				users, err := geq.AsSlice(q).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
@@ -90,7 +90,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "load as single map",
 			run: func() bool {
-				q := geq.From(b.Users).OrderBy(b.Users.ID)
+				q := b.From(b.Users).OrderBy(b.Users.ID)
 				userMap, err := geq.AsMap(q, b.Users.Name).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
@@ -110,7 +110,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "load as custom slice",
 			run: func() bool {
-				q := geq.From(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID).Limit(3)
+				q := b.From(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID).Limit(3)
 				stats, err := geq.AsSliceOf(q, &PostStats{
 					AuthorID: b.Users.ID,
 					Foo:      b.Posts.ID.Eq(b.Users.ID),
