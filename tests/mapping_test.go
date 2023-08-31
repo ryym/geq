@@ -8,6 +8,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/go-cmp/cmp"
 	"github.com/ryym/geq"
+	"github.com/ryym/geq/tests/b"
+	"github.com/ryym/geq/tests/mdl"
 )
 
 func TestResultMappings(t *testing.T) {
@@ -20,7 +22,6 @@ func TestResultMappings(t *testing.T) {
 		t.Fatalf("failed to ping to DB: %v", err)
 	}
 
-	b := NewQueryBuilder()
 	ctx := context.Background()
 
 	runTestCases(t, []testCase{
@@ -28,12 +29,12 @@ func TestResultMappings(t *testing.T) {
 			name: "select into single slice",
 			run: func() bool {
 				q := geq.From(b.Users).OrderBy(b.Users.ID)
-				var users []User
+				var users []mdl.User
 				err := geq.AsThese(q, geq.ToSlice(b.Users, &users)).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
-				want := []User{
+				want := []mdl.User{
 					{ID: 1, Name: "user1"},
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
@@ -49,12 +50,12 @@ func TestResultMappings(t *testing.T) {
 			name: "select into single map",
 			run: func() bool {
 				q := geq.From(b.Users).OrderBy(b.Users.ID)
-				var userMap map[int64]User
+				var userMap map[int64]mdl.User
 				err := geq.AsThese(q, geq.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
-				want := map[int64]User{
+				want := map[int64]mdl.User{
 					1: {ID: 1, Name: "user1"},
 					2: {ID: 2, Name: "user2"},
 					3: {ID: 3, Name: "user3"},
@@ -74,7 +75,7 @@ func TestResultMappings(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-				want := []User{
+				want := []mdl.User{
 					{ID: 1, Name: "user1"},
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
@@ -94,7 +95,7 @@ func TestResultMappings(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-				want := map[string]User{
+				want := map[string]mdl.User{
 					"user1": {ID: 1, Name: "user1"},
 					"user2": {ID: 2, Name: "user2"},
 					"user3": {ID: 3, Name: "user3"},

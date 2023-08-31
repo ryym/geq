@@ -1,16 +1,9 @@
-package tests
+package schema
 
-import "github.com/ryym/geq"
-
-type User struct {
-	ID   int64
-	Name string
-}
-type Post struct {
-	ID       int64
-	AuthorID int64
-	Title    string
-}
+import (
+	"github.com/ryym/geq"
+	"github.com/ryym/geq/tests/mdl"
+)
 
 type UsersTable struct {
 	ID      *geq.Column[int64]
@@ -31,7 +24,7 @@ func (t *UsersTable) TableName() string {
 	return "users"
 }
 
-func (t *UsersTable) FieldPtrs(u *User) []any {
+func (t *UsersTable) FieldPtrs(u *mdl.User) []any {
 	return []any{&u.ID, &u.Name}
 }
 
@@ -45,7 +38,7 @@ type PostsTable struct {
 	Title    *geq.Column[string]
 	columns  []geq.Selection
 
-	Author *geq.Relship[User, int64]
+	Author *geq.Relship[mdl.User, int64]
 }
 
 func NewPostsTable() *PostsTable {
@@ -62,7 +55,7 @@ func (t *PostsTable) TableName() string {
 	return "posts"
 }
 
-func (t *PostsTable) FieldPtrs(p *Post) []any {
+func (t *PostsTable) FieldPtrs(p *mdl.Post) []any {
 	return []any{&p.ID, &p.AuthorID, &p.Title}
 }
 

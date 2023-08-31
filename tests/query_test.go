@@ -6,11 +6,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/ryym/geq"
+	"github.com/ryym/geq/tests/b"
+	"github.com/ryym/geq/tests/mdl"
 )
 
 func TestBuiltQueries(t *testing.T) {
-	b := NewQueryBuilder()
-
 	runTestCases(t, []testCase{
 		{
 			name: "basic select",
@@ -27,7 +27,7 @@ func TestBuiltQueries(t *testing.T) {
 		{
 			name: "select via table relationship",
 			run: func() bool {
-				users := []User{
+				users := []mdl.User{
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
 				}
