@@ -1,10 +1,5 @@
 package geq
 
-import (
-	"fmt"
-	"strings"
-)
-
 func AsSlice[R any](q *Query[R]) *SliceLoader[R, R] {
 	return &SliceLoader[R, R]{query: q, mapper: q.from}
 }
@@ -37,18 +32,15 @@ func Via[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Query[T]
 		panic("right table column not in selections")
 	}
 
-	keys := make([]any, len(srcs))
+	keys := make([]C, len(srcs))
 	for i, s := range srcs {
 		ptrs := relship.tableR.FieldPtrs(&s)
 		ptr := ptrs[colIdx]
 		keys[i] = *ptr.(*C)
 	}
 
-	placeholders := strings.Repeat(",?", len(keys))[1:]
 	q := newQuery(from)
-	where := fmt.Sprintf("%s IN (%s)", buildExprPart(relship.colL).String(), placeholders)
-	q.AppendWhere(where)
-	q.AppendArgs(keys...)
+	q.Where(relship.colL.In(keys))
 
 	return q
 }

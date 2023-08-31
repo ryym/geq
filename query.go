@@ -56,8 +56,8 @@ type Query[R any] struct {
 	selections []Selection
 	from       Table[R]
 	innerJoins []AnyRelship // For now.
-	wheres     []string     // For now.
-	orders     []Expr       // For now ASC only.
+	wheres     []Expr
+	orders     []Expr // For now ASC only.
 	args       []any
 }
 
@@ -79,13 +79,9 @@ func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
 	return q
 }
 
-func (q *Query[R]) AppendWhere(wheres ...string) *Query[R] {
-	q.wheres = append(q.wheres, wheres...)
+func (q *Query[R]) Where(exprs ...Expr) *Query[R] {
+	q.wheres = append(q.wheres, exprs...)
 	return q
-}
-
-func (q *Query[R]) AppendArgs(args ...any) {
-	q.args = append(q.args, args...)
 }
 
 func (q *Query[R]) OrderBy(orders ...Expr) *Query[R] {
@@ -137,7 +133,8 @@ func (q *Query[R]) Finalize() *FinalQuery {
 			if i > 0 {
 				sb.WriteString(" AND ")
 			}
-			sb.WriteString(w)
+			part := buildExprPart(w)
+			appendQuery(part.String(), part.args)
 		}
 	}
 

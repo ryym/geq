@@ -34,6 +34,14 @@ func (c *Column[F]) appendQuery(p *queryPart) {
 	fmt.Fprintf(p.sb, "%s.%s", c.TableName, c.ColumnName)
 }
 
+func (c *Column[F]) In(values []F) Expr {
+	anyVals := make([]any, 0, len(values))
+	for _, v := range values {
+		anyVals = append(anyVals, v)
+	}
+	return implOps(&inExpr{operand: c, values: anyVals})
+}
+
 func buildExprPart(expr Expr) *queryPart {
 	p := &queryPart{sb: new(strings.Builder)}
 	expr.appendQuery(p)
@@ -72,4 +80,19 @@ func (e *infixExpr) appendQuery(p *queryPart) {
 	e.left.appendQuery(p)
 	fmt.Fprintf(p.sb, " %s ", e.op)
 	e.right.appendQuery(p)
+}
+
+type inExpr struct {
+	ops
+	operand Expr
+	values  []any
+}
+
+func (e *inExpr) appendQuery(p *queryPart) {
+	placeholders := strings.Repeat(",?", len(e.values))[1:]
+	e.operand.appendQuery(p)
+	p.sb.WriteString(" IN (")
+	p.sb.WriteString(placeholders)
+	p.sb.WriteString(")")
+	p.args = append(p.args, e.values...)
 }
