@@ -57,3 +57,14 @@ func From[R any](table Table[R]) *Query[R] {
 func FromNothing() *Query[struct{}] {
 	return newQuery[struct{}](nil)
 }
+
+func Func(name string, args ...any) Expr {
+	exprs := make([]Expr, 0, len(args))
+	for _, arg := range args {
+		exprs = append(exprs, lift(arg))
+	}
+	return implOps(&funcExpr{
+		name: name,
+		args: exprs,
+	})
+}

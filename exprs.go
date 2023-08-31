@@ -96,3 +96,21 @@ func (e *inExpr) appendQuery(p *queryPart) {
 	p.sb.WriteString(")")
 	p.args = append(p.args, e.values...)
 }
+
+type funcExpr struct {
+	ops
+	name string
+	args []Expr
+}
+
+func (e *funcExpr) appendQuery(p *queryPart) {
+	p.sb.WriteString(e.name)
+	p.sb.WriteRune('(')
+	for i, arg := range e.args {
+		if i > 0 {
+			p.sb.WriteString(", ")
+		}
+		arg.appendQuery(p)
+	}
+	p.sb.WriteRune(')')
+}

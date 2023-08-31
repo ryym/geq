@@ -85,6 +85,26 @@ func TestBuiltQueries(t *testing.T) {
 			},
 		},
 		{
+			name: "select function calls",
+			run: func() bool {
+				q := b.FromNothing().Select(
+					b.Count(b.Users.ID),
+					b.Max(b.Users.Name),
+					b.Func("MYFUNC", 1, b.Users.ID),
+				)
+				got := q.Finalize()
+				want := newFinalQuery(
+					"SELECT COUNT(users.id), MAX(users.name), MYFUNC(?, users.id)",
+					1,
+				)
+				if diff := cmp.Diff(got, want); diff != "" {
+					t.Errorf("wrong final query:%s", diff)
+					return false
+				}
+				return true
+			},
+		},
+		{
 			name: "select with limit",
 			run: func() bool {
 				q := b.From(b.Users).Select(b.Users.ID).Limit(2)

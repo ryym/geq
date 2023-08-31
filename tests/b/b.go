@@ -25,3 +25,15 @@ func From[R any](table geq.Table[R]) *geq.Query[R] {
 func FromNothing() *geq.Query[struct{}] {
 	return geq.FromNothing()
 }
+
+func Func(name string, args ...any) geq.Expr {
+	return geq.Func(name, args...)
+}
+
+func Count(expr geq.Expr) geq.Expr {
+	return geq.Func("COUNT", expr)
+}
+
+func Max(expr geq.Expr) geq.Expr {
+	return geq.Func("MAX", expr)
+}
