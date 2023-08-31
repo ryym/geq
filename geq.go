@@ -17,6 +17,11 @@ func AsThese[Q any](q *Query[Q], scanners ...RowsScanner) *MultiScanLoader[Q] {
 	return &MultiScanLoader[Q]{query: q, scanners: scanners}
 }
 
+func AsSliceOf[Q, R any](q *Query[Q], mapper RowMapper[R]) *SliceLoader[Q, R] {
+	q.selections = mapper.Selections()
+	return &SliceLoader[Q, R]{query: q, mapper: mapper}
+}
+
 func ToSlice[R any](mapper RowMapper[R], dest *[]R) *SliceScanner[R] {
 	return &SliceScanner[R]{mapper: mapper, dest: dest}
 }

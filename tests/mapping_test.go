@@ -106,5 +106,29 @@ func TestResultMappings(t *testing.T) {
 				return true
 			},
 		},
+		{
+			name: "load as custom slice",
+			run: func() bool {
+				q := geq.From(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID).Limit(3)
+				stats, err := geq.AsSliceOf(q, &PostStats{
+					AuthorID: b.Users.ID,
+					Foo:      b.Posts.ID.Eq(b.Users.ID),
+				}).Load(ctx, db)
+
+				if err != nil {
+					t.Error(err)
+				}
+				want := []PostStat{
+					{AuthorID: 1, Foo: true},
+					{AuthorID: 1, Foo: false},
+					{AuthorID: 2, Foo: false},
+				}
+				if diff := cmp.Diff(stats, want); diff != "" {
+					t.Errorf("wrong result:%s", diff)
+					return false
+				}
+				return true
+			},
+		},
 	})
 }
