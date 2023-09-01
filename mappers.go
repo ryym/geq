@@ -15,3 +15,12 @@ func (m *ValueMapper[V]) Selections() []Selection {
 func (m *ValueMapper[V]) FieldPtrs(p *V) []any {
 	return []any{p}
 }
+
+type EmptyMapper struct{}
+
+func (m *EmptyMapper) Selections() []Selection {
+	return []Selection{}
+}
+func (m *EmptyMapper) FieldPtrs(_ *struct{}) []any {
+	return []any{}
+}

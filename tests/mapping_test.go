@@ -7,7 +7,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/go-cmp/cmp"
-	"github.com/ryym/geq"
 	"github.com/ryym/geq/tests/b"
 	"github.com/ryym/geq/tests/mdl"
 )
@@ -28,11 +27,11 @@ func TestResultMappings(t *testing.T) {
 
 	runTestCases(t, []testCase{
 		{
-			name: "select into single slice",
+			name: "scan into single slice",
 			run: func() bool {
-				q := b.From(b.Users).OrderBy(b.Users.ID)
 				var users []mdl.User
-				err := geq.AsThese(q, geq.ToSlice(b.Users, &users)).Load(ctx, db)
+				q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
+				err := q.Scan(b.ToSlice(b.Users, &users)).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
@@ -49,11 +48,11 @@ func TestResultMappings(t *testing.T) {
 			},
 		},
 		{
-			name: "select into single map",
+			name: "scan into single map",
 			run: func() bool {
-				q := b.From(b.Users).OrderBy(b.Users.ID)
 				var userMap map[int64]mdl.User
-				err := geq.AsThese(q, geq.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
+				q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
+				err := q.Scan(b.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
@@ -72,8 +71,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "load as single slice",
 			run: func() bool {
-				q := b.From(b.Users).OrderBy(b.Users.ID)
-				users, err := geq.AsSlice(q).Load(ctx, db)
+				users, err := b.SelectFrom(b.Users).OrderBy(b.Users.ID).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
@@ -92,8 +90,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "load as single map",
 			run: func() bool {
-				q := b.From(b.Users).OrderBy(b.Users.ID)
-				userMap, err := geq.AsMap(q, b.Users.Name).Load(ctx, db)
+				userMap, err := b.AsMap(b.Users.Name, b.SelectFrom(b.Users).OrderBy(b.Users.ID)).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
@@ -112,16 +109,15 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "load as custom slice",
 			run: func() bool {
-				q := b.From(b.Posts).
-					Joins(b.Posts.Author).
-					GroupBy(b.Posts.AuthorID).
-					OrderBy(b.Posts.AuthorID)
-
-				stats, err := geq.AsSliceOf(q, &PostStats{
+				stats, err := b.SelectAs(&PostStats{
 					AuthorID:  b.Users.ID,
 					PostCount: b.Count(b.Posts.ID),
 					LastTitle: b.Max(b.Posts.Title),
-				}).Load(ctx, db)
+				}).From(b.Posts).
+					Joins(b.Posts.Author).
+					GroupBy(b.Posts.AuthorID).
+					OrderBy(b.Posts.AuthorID).
+					Load(ctx, db)
 
 				if err != nil {
 					t.Error(err)
@@ -141,8 +137,7 @@ func TestResultMappings(t *testing.T) {
 		{
 			name: "load as values",
 			run: func() bool {
-				q := b.From(b.Users).OrderBy(b.Users.ID)
-				ids, err := geq.AsValues(q, b.Users.ID).Load(ctx, db)
+				ids, err := b.SelectOnly(b.Users.ID).From(b.Users).OrderBy(b.Users.ID).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}

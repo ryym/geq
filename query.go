@@ -1,6 +1,7 @@
 package geq
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
@@ -63,18 +64,19 @@ type Query[R any] struct {
 	args       []any
 }
 
-func newQuery[R any](from Table[R]) *Query[R] {
-	var sels []Selection
-	var mapper RowMapper[R]
-	if from != nil {
-		sels = from.Selections()
-		mapper = from
-	}
-	return &Query[R]{selections: sels, from: from, mapper: mapper}
+func newQuery[R any](mapper RowMapper[R]) *Query[R] {
+	q := &Query[R]{mapper: mapper}
+	q.selections = mapper.Selections()
+	return q
 }
 
 func (q *Query[R]) Select(sels ...Selection) *Query[R] {
 	q.selections = sels
+	return q
+}
+
+func (q *Query[R]) From(table AnyTable) *Query[R] {
+	q.from = table
 	return q
 }
 
@@ -182,6 +184,20 @@ func (q *Query[R]) Finalize() *FinalQuery {
 		Query: sb.String(),
 		Args:  q.args,
 	}
+}
+
+func (q *Query[R]) Load(ctx context.Context, db QueryRunner) (recs []R, err error) {
+	l := &SliceLoader[R, R]{query: q, mapper: q.mapper}
+	return l.Load(ctx, db)
+}
+
+func (q *Query[R]) Scan(scanners ...RowsScanner) *MultiScanLoader[R] {
+	sels := make([]Selection, 0)
+	for _, s := range scanners {
+		sels = append(sels, s.Selections()...)
+	}
+	q.selections = sels
+	return &MultiScanLoader[R]{query: q, scanners: scanners}
 }
 
 type queryPart struct {
