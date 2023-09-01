@@ -69,6 +69,43 @@ func TestResultMappings(t *testing.T) {
 			},
 		},
 		{
+			name: "scan into multiple results",
+			run: func() bool {
+				var posts []mdl.Post
+				var userMap map[int64]mdl.User
+				q := b.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.ID)
+				err := q.Scan(
+					b.ToSlice(b.Posts, &posts),
+					b.ToMap(b.Users, b.Users.ID, &userMap),
+				).Load(ctx, db)
+				if err != nil {
+					t.Error(err)
+				}
+				wantPostSlice := []mdl.Post{
+					{ID: 1, AuthorID: 1, Title: "user1-post1"},
+					{ID: 2, AuthorID: 1, Title: "user1-post2"},
+					{ID: 3, AuthorID: 2, Title: "user2-post1"},
+					{ID: 4, AuthorID: 3, Title: "user3-post1"},
+					{ID: 5, AuthorID: 3, Title: "user3-post2"},
+					{ID: 6, AuthorID: 3, Title: "user3-post3"},
+				}
+				if diff := cmp.Diff(posts, wantPostSlice); diff != "" {
+					t.Errorf("wrong result:%s", diff)
+					return false
+				}
+				wantUserMap := map[int64]mdl.User{
+					1: {ID: 1, Name: "user1"},
+					2: {ID: 2, Name: "user2"},
+					3: {ID: 3, Name: "user3"},
+				}
+				if diff := cmp.Diff(userMap, wantUserMap); diff != "" {
+					t.Errorf("wrong result:%s", diff)
+					return false
+				}
+				return true
+			},
+		},
+		{
 			name: "load as single slice",
 			run: func() bool {
 				users, err := b.SelectFrom(b.Users).OrderBy(b.Users.ID).Load(ctx, db)
