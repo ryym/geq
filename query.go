@@ -169,7 +169,7 @@ func (q *Query[R]) Finalize() *FinalQuery {
 		sb.WriteString(" ORDER BY ")
 		for i, expr := range q.orders {
 			if i > 0 {
-				sb.WriteRune(',')
+				sb.WriteString(", ")
 			}
 			p := buildExprPart(expr)
 			appendQuery(p.String(), p.args)
