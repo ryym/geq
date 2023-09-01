@@ -10,9 +10,24 @@ type RowMapper[R any] interface {
 	FieldPtrs(*R) []any
 }
 
+type ValueMapper[V any] struct {
+	sels []Selection
+}
+
+func (m *ValueMapper[V]) Selections() []Selection {
+	return m.sels
+}
+func (m *ValueMapper[V]) FieldPtrs(p *V) []any {
+	return []any{p}
+}
+
+type AnyTable interface {
+	TableName() string
+}
+
 type Table[R any] interface {
 	RowMapper[R]
-	TableName() string
+	AnyTable
 }
 
 type Selection interface {
@@ -53,8 +68,9 @@ type FinalQuery struct {
 }
 
 type Query[R any] struct {
+	mapper     RowMapper[R]
 	selections []Selection
-	from       Table[R]
+	from       AnyTable
 	innerJoins []AnyRelship // For now.
 	wheres     []Expr
 	groups     []Expr
@@ -65,10 +81,12 @@ type Query[R any] struct {
 
 func newQuery[R any](from Table[R]) *Query[R] {
 	var sels []Selection
+	var mapper RowMapper[R]
 	if from != nil {
 		sels = from.Selections()
+		mapper = from
 	}
-	return &Query[R]{selections: sels, from: from}
+	return &Query[R]{selections: sels, from: from, mapper: mapper}
 }
 
 func (q *Query[R]) Select(sels ...Selection) *Query[R] {

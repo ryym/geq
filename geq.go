@@ -1,11 +1,18 @@
 package geq
 
 func AsSlice[R any](q *Query[R]) *SliceLoader[R, R] {
-	return &SliceLoader[R, R]{query: q, mapper: q.from}
+	return &SliceLoader[R, R]{query: q, mapper: q.mapper}
 }
 
 func AsMap[R any, K comparable](q *Query[R], key *Column[K]) *MapLoader[R, R, K] {
-	return &MapLoader[R, R, K]{query: q, mapper: q.from, key: key}
+	return &MapLoader[R, R, K]{query: q, mapper: q.mapper, key: key}
+}
+
+func AsValues[Q, V any](q *Query[Q], col *Column[V]) *SliceLoader[Q, V] {
+	sels := []Selection{col}
+	mapper := &ValueMapper[V]{sels: sels}
+	q.selections = sels
+	return &SliceLoader[Q, V]{query: q, mapper: mapper}
 }
 
 func AsThese[Q any](q *Query[Q], scanners ...RowsScanner) *MultiScanLoader[Q] {

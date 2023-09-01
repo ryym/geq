@@ -1,6 +1,8 @@
 package geq
 
-import "errors"
+import (
+	"errors"
+)
 
 type RowsScanner interface {
 	Selections() []Selection

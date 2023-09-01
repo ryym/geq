@@ -12,6 +12,8 @@ import (
 	"github.com/ryym/geq/tests/mdl"
 )
 
+// type Value
+
 func TestResultMappings(t *testing.T) {
 	db, err := sql.Open("mysql", "root:root@tcp(:3990)/geq")
 	if err != nil {
@@ -130,6 +132,22 @@ func TestResultMappings(t *testing.T) {
 					{AuthorID: 3, PostCount: 3, LastTitle: "user3-post3"},
 				}
 				if diff := cmp.Diff(stats, want); diff != "" {
+					t.Errorf("wrong result:%s", diff)
+					return false
+				}
+				return true
+			},
+		},
+		{
+			name: "load as values",
+			run: func() bool {
+				q := b.From(b.Users).OrderBy(b.Users.ID)
+				ids, err := geq.AsValues(q, b.Users.ID).Load(ctx, db)
+				if err != nil {
+					t.Error(err)
+				}
+				want := []int64{1, 2, 3}
+				if diff := cmp.Diff(ids, want); diff != "" {
 					t.Errorf("wrong result:%s", diff)
 					return false
 				}
