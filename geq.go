@@ -30,24 +30,8 @@ func Builder_Select(sels ...Selection) *Query[struct{}] {
 	return newQuery[struct{}](mapper).Select(sels...)
 }
 
-func Builder_SelectVia[S, T, C any](srcs []S, from Table[T], relship *Relship[S, C]) *Query[T] {
-	sels := relship.tableR.Selections()
-	colIdx := selectionIndex(sels[0], sels, relship.colR)
-	if colIdx < 0 {
-		panic("right table column not in selections")
-	}
-
-	keys := make([]C, len(srcs))
-	for i, s := range srcs {
-		ptrs := relship.tableR.FieldPtrs(&s)
-		ptr := ptrs[colIdx]
-		keys[i] = *ptr.(*C)
-	}
-
-	q := newQuery(from).From(from)
-	q.Where(relship.colL.In(keys))
-
-	return q
+func Builder_SelectVia[S, T, C any](srcs []S, table Table[T], relship *Relship[S, C]) *Query[T] {
+	return newQuery(table).From(table).Where(relship.In(srcs))
 }
 
 func Builder_Func(name string, args ...any) Expr {

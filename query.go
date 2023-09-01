@@ -47,6 +47,23 @@ func (r *Relship[R, C]) JoinColumns() (left Expr, right Expr) {
 	return r.colL, r.colR
 }
 
+func (r *Relship[R, C]) In(recs []R) Expr {
+	sels := r.tableR.Selections()
+	colIdx := selectionIndex(sels[0], sels, r.colR)
+	if colIdx < 0 {
+		panic("right table column not in selections")
+	}
+
+	vals := make([]C, 0, len(recs))
+	for _, rec := range recs {
+		ptrs := r.tableR.FieldPtrs(&rec)
+		ptr := ptrs[colIdx]
+		vals = append(vals, *ptr.(*C))
+	}
+
+	return r.colL.In(vals)
+}
+
 type FinalQuery struct {
 	Query string
 	Args  []any
