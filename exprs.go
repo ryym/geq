@@ -22,16 +22,16 @@ func (a *Aliased) Alias() string { return a.alias }
 
 type Column[F any] struct {
 	ops
-	TableName  string
-	ColumnName string
+	tableName  string
+	columnName string
 }
 
 func NewColumn[F any](tableName, columnName string) *Column[F] {
-	return implOps(&Column[F]{TableName: tableName, ColumnName: columnName})
+	return implOps(&Column[F]{tableName: tableName, columnName: columnName})
 }
 
 func (c *Column[F]) appendQuery(p *queryPart) {
-	fmt.Fprintf(p.sb, "%s.%s", c.TableName, c.ColumnName)
+	fmt.Fprintf(p.sb, "%s.%s", c.tableName, c.columnName)
 }
 
 func (c *Column[F]) In(values []F) Expr {
