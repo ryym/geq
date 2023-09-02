@@ -26,8 +26,8 @@ func ToMap[R any, K comparable](mapper geq.RowMapper[R], key geq.TypedSelection[
 	return geq.Builder_ToMap(mapper, key, dest)
 }
 
-func SelectFrom[R any](table geq.Table[R]) *geq.Query[R] {
-	return geq.Builder_SelectFrom(table)
+func SelectFrom[R any](table geq.Table[R], sels ...geq.Selection) *geq.Query[R] {
+	return geq.Builder_SelectFrom(table, sels...)
 }
 
 func SelectAs[R any](mapper geq.RowMapper[R]) *geq.Query[R] {

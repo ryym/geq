@@ -20,6 +20,11 @@ type Aliased struct {
 func (a *Aliased) Expr() Expr    { return a.expr }
 func (a *Aliased) Alias() string { return a.alias }
 
+type AnyColumn interface {
+	Expr
+	ColumnName() string
+}
+
 type Column[F any] struct {
 	ops
 	tableName  string
@@ -28,6 +33,10 @@ type Column[F any] struct {
 
 func NewColumn[F any](tableName, columnName string) *Column[F] {
 	return implOps(&Column[F]{tableName: tableName, columnName: columnName})
+}
+
+func (c *Column[F]) ColumnName() string {
+	return c.columnName
 }
 
 func (c *Column[F]) appendQuery(p *queryPart) {

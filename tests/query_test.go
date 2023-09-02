@@ -107,7 +107,7 @@ func TestBuiltQueries(t *testing.T) {
 		{
 			name: "select with grouping",
 			run: func() bool {
-				q := b.SelectFrom(b.Users).Select(b.Users.Name, b.Max(b.Users.ID)).GroupBy(b.Users.Name)
+				q := b.SelectFrom(b.Users, b.Users.Name, b.Max(b.Users.ID)).GroupBy(b.Users.Name)
 				got := q.Finalize()
 				want := newFinalQuery("SELECT users.name, MAX(users.id) FROM users GROUP BY users.name")
 				if diff := cmp.Diff(got, want); diff != "" {
@@ -120,7 +120,7 @@ func TestBuiltQueries(t *testing.T) {
 		{
 			name: "select with limit",
 			run: func() bool {
-				q := b.SelectFrom(b.Users).Select(b.Users.ID).Limit(2)
+				q := b.SelectFrom(b.Users, b.Users.ID).Limit(2)
 				got := q.Finalize()
 				want := newFinalQuery("SELECT users.id FROM users LIMIT 2")
 				if diff := cmp.Diff(got, want); diff != "" {

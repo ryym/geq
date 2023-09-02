@@ -87,11 +87,6 @@ func newQuery[R any](mapper RowMapper[R]) *Query[R] {
 	return q
 }
 
-func (q *Query[R]) Select(sels ...Selection) *Query[R] {
-	q.selections = sels
-	return q
-}
-
 func (q *Query[R]) From(table AnyTable) *Query[R] {
 	q.from = table
 	return q

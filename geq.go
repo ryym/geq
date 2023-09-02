@@ -12,8 +12,12 @@ func Builder_ToMap[R any, K comparable](mapper RowMapper[R], key TypedSelection[
 	return &MapScanner[R, K]{mapper: mapper, dest: dest, key: key}
 }
 
-func Builder_SelectFrom[R any](table Table[R]) *Query[R] {
-	return newQuery(table).From(table)
+func Builder_SelectFrom[R any](table Table[R], sels ...Selection) *Query[R] {
+	q := newQuery(table).From(table)
+	if len(sels) > 0 {
+		q.selections = sels
+	}
+	return q
 }
 
 func Builder_SelectAs[R any](mapper RowMapper[R]) *Query[R] {
@@ -27,7 +31,9 @@ func Builder_SelectOnly[V any](col *Column[V]) *Query[V] {
 
 func Builder_Select(sels ...Selection) *Query[struct{}] {
 	mapper := &EmptyMapper{}
-	return newQuery[struct{}](mapper).Select(sels...)
+	q := newQuery[struct{}](mapper)
+	q.selections = sels
+	return q
 }
 
 func Builder_SelectVia[S, T, C any](srcs []S, table Table[T], relship *Relship[S, C]) *Query[T] {
