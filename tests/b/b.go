@@ -18,12 +18,20 @@ func AsMap[R any, K comparable](key *geq.Column[K], q *geq.Query[R]) *geq.MapLoa
 	return geq.Builder_AsMap(key, q)
 }
 
+func AsSliceMap[R any, K comparable](key *geq.Column[K], q *geq.Query[R]) *geq.SliceMapLoader[R, R, K] {
+	return geq.Builder_AsSliceMap(key, q)
+}
+
 func ToSlice[R any](mapper geq.RowMapper[R], dest *[]R) *geq.SliceScanner[R] {
 	return geq.Builder_ToSlice(mapper, dest)
 }
 
 func ToMap[R any, K comparable](mapper geq.RowMapper[R], key geq.TypedSelection[K], dest *map[K]R) *geq.MapScanner[R, K] {
 	return geq.Builder_ToMap(mapper, key, dest)
+}
+
+func ToSliceMap[R any, K comparable](mapper geq.RowMapper[R], key geq.TypedSelection[K], dest *map[K][]R) *geq.SliceMapScanner[R, K] {
+	return geq.Builder_ToSliceMap(mapper, key, dest)
 }
 
 func SelectFrom[R any](table geq.Table[R], sels ...geq.Selection) *geq.Query[R] {

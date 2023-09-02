@@ -61,3 +61,34 @@ func (s *MapScanner[R, K]) AfterEachScan(ptrs []any) {
 	key := *keyPtr.(*K)
 	(*s.dest)[key] = *s.row
 }
+
+type SliceMapScanner[R any, K comparable] struct {
+	mapper RowMapper[R]
+	key    TypedSelection[K]
+	dest   *map[K][]R
+	keyIdx int
+	row    *R
+}
+
+func (s *SliceMapScanner[R, K]) Selections() []Selection {
+	return s.mapper.Selections()
+}
+
+func (s *SliceMapScanner[R, K]) BeforeEachScan(idx int, sels []Selection) (ptrs []any, err error) {
+	if idx == 0 {
+		ki := selectionIndex(s.Selections()[0], sels, s.key)
+		if ki == -1 {
+			return nil, errors.New("failed to scan as slice map: key not found in selections")
+		}
+		s.keyIdx = ki
+		*s.dest = make(map[K][]R)
+	}
+	s.row = new(R)
+	return s.mapper.FieldPtrs(s.row), nil
+}
+
+func (s *SliceMapScanner[R, K]) AfterEachScan(ptrs []any) {
+	keyPtr := ptrs[s.keyIdx]
+	key := *keyPtr.(*K)
+	(*s.dest)[key] = append((*s.dest)[key], *s.row)
+}

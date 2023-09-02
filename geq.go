@@ -4,12 +4,20 @@ func Builder_AsMap[R any, K comparable](key *Column[K], q *Query[R]) *MapLoader[
 	return &MapLoader[R, R, K]{query: q, mapper: q.mapper, key: key}
 }
 
+func Builder_AsSliceMap[R any, K comparable](key *Column[K], q *Query[R]) *SliceMapLoader[R, R, K] {
+	return &SliceMapLoader[R, R, K]{query: q, mapper: q.mapper, key: key}
+}
+
 func Builder_ToSlice[R any](mapper RowMapper[R], dest *[]R) *SliceScanner[R] {
 	return &SliceScanner[R]{mapper: mapper, dest: dest}
 }
 
 func Builder_ToMap[R any, K comparable](mapper RowMapper[R], key TypedSelection[K], dest *map[K]R) *MapScanner[R, K] {
 	return &MapScanner[R, K]{mapper: mapper, dest: dest, key: key}
+}
+
+func Builder_ToSliceMap[R any, K comparable](mapper RowMapper[R], key TypedSelection[K], dest *map[K][]R) *SliceMapScanner[R, K] {
+	return &SliceMapScanner[R, K]{mapper: mapper, dest: dest, key: key}
 }
 
 func Builder_SelectFrom[R any](table Table[R], sels ...Selection) *Query[R] {

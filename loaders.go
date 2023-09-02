@@ -74,6 +74,22 @@ func (l *MapLoader[Q, R, K]) Load(ctx context.Context, db QueryRunner) (map[K]R,
 	return dest, nil
 }
 
+type SliceMapLoader[Q, R any, K comparable] struct {
+	query  *Query[Q]
+	mapper RowMapper[R]
+	key    *Column[K]
+}
+
+func (l *SliceMapLoader[Q, R, K]) Load(ctx context.Context, db QueryRunner) (map[K][]R, error) {
+	var dest map[K][]R
+	scanner := &SliceMapScanner[R, K]{mapper: l.mapper, key: l.key, dest: &dest}
+	err := loadBySingleScanner(ctx, db, scanner, l.query)
+	if err != nil {
+		return nil, err
+	}
+	return dest, nil
+}
+
 func loadBySingleScanner[Q any](ctx context.Context, db QueryRunner, s RowsScanner, q *Query[Q]) (err error) {
 	fq := q.Finalize()
 	rows, err := db.QueryContext(ctx, fq.Query, fq.Args...)
