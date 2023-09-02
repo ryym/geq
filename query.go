@@ -2,6 +2,7 @@ package geq
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 )
@@ -225,6 +226,11 @@ func (q *Query[R]) Finalize() *FinalQuery {
 func (q *Query[R]) Load(ctx context.Context, db QueryRunner) (recs []R, err error) {
 	l := &SliceLoader[R, R]{query: q, mapper: q.mapper}
 	return l.Load(ctx, db)
+}
+
+func (q *Query[R]) LoadRows(ctx context.Context, db QueryRunner) (rows *sql.Rows, err error) {
+	fq := q.Finalize()
+	return db.QueryContext(ctx, fq.Query, fq.Args...)
 }
 
 func (q *Query[R]) WillScan(scanners ...RowsScanner) *MultiScanLoader[R] {

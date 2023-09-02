@@ -245,5 +245,29 @@ func TestResultMappings(t *testing.T) {
 				return true
 			},
 		},
+		{
+			name: "load as sql.Rows",
+			run: func() bool {
+				q := b.Select(b.Raw("2-9"), b.Posts.AuthorID, b.Max(b.Posts.ID)).From(b.Posts).GroupBy(b.Posts.AuthorID)
+				rows, err := q.LoadRows(ctx, db)
+				if err != nil {
+					t.Error(err)
+				}
+
+				results := make([][]int, 0, 3)
+				for rows.Next() {
+					var v1, v2, v3 int
+					rows.Scan(&v1, &v2, &v3)
+					results = append(results, []int{v1, v2, v3})
+				}
+
+				want := [][]int{{-7, 1, 2}, {-7, 2, 3}, {-7, 3, 6}}
+				if diff := cmp.Diff(results, want); diff != "" {
+					t.Errorf("wrong result:%s", diff)
+					return false
+				}
+				return true
+			},
+		},
 	})
 }
