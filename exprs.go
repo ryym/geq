@@ -118,3 +118,13 @@ func (e *funcExpr) appendExpr(w *queryWriter) {
 	}
 	w.Write(")")
 }
+
+type rawExpr struct {
+	ops
+	expr string
+	args []any
+}
+
+func (e *rawExpr) appendExpr(w *queryWriter) {
+	w.Write(e.expr, e.args...)
+}

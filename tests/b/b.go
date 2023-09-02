@@ -57,3 +57,7 @@ func Count(expr geq.Expr) geq.Expr {
 func Max(expr geq.Expr) geq.Expr {
 	return Func("MAX", expr)
 }
+
+func Raw(expr string, args ...any) geq.Expr {
+	return geq.Builder_Raw(expr, args...)
+}

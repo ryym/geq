@@ -45,8 +45,9 @@ func Builder_Func(name string, args ...any) Expr {
 	for _, arg := range args {
 		exprs = append(exprs, lift(arg))
 	}
-	return implOps(&funcExpr{
-		name: name,
-		args: exprs,
-	})
+	return implOps(&funcExpr{name: name, args: exprs})
+}
+
+func Builder_Raw(expr string, args ...any) Expr {
+	return implOps(&rawExpr{expr: expr, args: args})
 }
