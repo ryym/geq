@@ -6,61 +6,55 @@ import (
 )
 
 type UsersTable struct {
-	ID      *geq.Column[int64]
-	Name    *geq.Column[string]
-	columns []geq.Selection
+	*geq.TableBase
+	ID   *geq.Column[int64]
+	Name *geq.Column[string]
 }
 
-func NewUsersTable() *UsersTable {
+func NewUsersTable(alias string) *UsersTable {
 	t := &UsersTable{
 		ID:   geq.NewColumn[int64]("users", "id"),
 		Name: geq.NewColumn[string]("users", "name"),
 	}
-	t.columns = []geq.Selection{t.ID, t.Name}
+	columns := []geq.Selection{t.ID, t.Name}
+	t.TableBase = geq.NewTableBase("users", alias, columns)
 	return t
-}
-
-func (t *UsersTable) TableName() string {
-	return "users"
 }
 
 func (t *UsersTable) FieldPtrs(u *mdl.User) []any {
 	return []any{&u.ID, &u.Name}
 }
 
-func (t *UsersTable) Selections() []geq.Selection {
-	return t.columns
+func (t *UsersTable) As(alias string) *UsersTable {
+	return NewUsersTable(alias)
 }
 
 type PostsTable struct {
+	*geq.TableBase
 	ID       *geq.Column[int64]
 	AuthorID *geq.Column[int64]
 	Title    *geq.Column[string]
-	columns  []geq.Selection
 
 	Author *geq.Relship[mdl.User, int64]
 }
 
-func NewPostsTable() *PostsTable {
+func NewPostsTable(alias string) *PostsTable {
 	t := &PostsTable{
 		ID:       geq.NewColumn[int64]("posts", "id"),
 		AuthorID: geq.NewColumn[int64]("posts", "author_id"),
 		Title:    geq.NewColumn[string]("posts", "title"),
 	}
-	t.columns = []geq.Selection{t.ID, t.AuthorID, t.Title}
+	columns := []geq.Selection{t.ID, t.AuthorID, t.Title}
+	t.TableBase = geq.NewTableBase("posts", alias, columns)
 	return t
-}
-
-func (t *PostsTable) TableName() string {
-	return "posts"
 }
 
 func (t *PostsTable) FieldPtrs(p *mdl.Post) []any {
 	return []any{&p.ID, &p.AuthorID, &p.Title}
 }
 
-func (t *PostsTable) Selections() []geq.Selection {
-	return t.columns
+func (t *PostsTable) As(alias string) *PostsTable {
+	return NewPostsTable(alias)
 }
 
 type QueryBuilder struct {
@@ -70,8 +64,8 @@ type QueryBuilder struct {
 
 func NewQueryBuilder() *QueryBuilder {
 	b := &QueryBuilder{
-		Users: NewUsersTable(),
-		Posts: NewPostsTable(),
+		Users: NewUsersTable(""),
+		Posts: NewPostsTable(""),
 	}
 	b.Posts.Author = geq.NewRelship(b.Users, b.Posts.AuthorID, b.Users.ID)
 	return b

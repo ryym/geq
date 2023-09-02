@@ -8,11 +8,42 @@ import (
 
 type AnyTable interface {
 	TableName() string
+	appendTable(sb *strings.Builder)
 }
 
 type Table[R any] interface {
 	RowMapper[R]
 	AnyTable
+}
+
+type TableBase struct {
+	tableName string
+	alias     string
+	columns   []Selection
+}
+
+func NewTableBase(tableName string, alias string, columns []Selection) *TableBase {
+	return &TableBase{
+		tableName: tableName,
+		alias:     alias,
+		columns:   columns,
+	}
+}
+
+func (t *TableBase) TableName() string {
+	return t.tableName
+}
+
+func (t *TableBase) Selections() []Selection {
+	return t.columns
+}
+
+func (t *TableBase) appendTable(sb *strings.Builder) {
+	sb.WriteString(t.tableName)
+	if t.alias != "" {
+		sb.WriteString(" AS ")
+		sb.WriteString(t.alias)
+	}
 }
 
 type Selection interface {
@@ -140,7 +171,7 @@ func (q *Query[R]) Finalize() *FinalQuery {
 
 	if q.from != nil {
 		sb.WriteString(" FROM ")
-		sb.WriteString(q.from.TableName())
+		q.from.appendTable(&sb)
 	}
 
 	if len(q.innerJoins) > 0 {
