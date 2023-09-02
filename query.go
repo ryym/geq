@@ -118,6 +118,10 @@ func newQuery[R any](mapper RowMapper[R]) *Query[R] {
 	return q
 }
 
+func (q *Query[R]) As(alias string) *QueryTable[R] {
+	return &QueryTable[R]{query: q, alias: alias}
+}
+
 func (q *Query[R]) From(table AnyTable) *Query[R] {
 	q.from = table
 	return q
@@ -230,6 +234,29 @@ func (q *Query[R]) WillScan(scanners ...RowsScanner) *MultiScanLoader[R] {
 	}
 	q.selections = sels
 	return &MultiScanLoader[R]{query: q, scanners: scanners}
+}
+
+type QueryTable[R any] struct {
+	query *Query[R]
+	alias string
+}
+
+func (t *QueryTable[R]) TableName() string {
+	return t.alias
+}
+
+func (t *QueryTable[R]) Alias() string {
+	return t.alias
+}
+
+func (t *QueryTable[R]) appendTable(w *queryWriter) {
+	fq := t.query.Finalize()
+	w.Printf("(%s)", fq.Query)
+	w.Args = append(w.Args, fq.Args...)
+	if t.alias != "" {
+		w.Write(" AS ")
+		w.Write(t.alias)
+	}
 }
 
 type queryWriter struct {

@@ -130,6 +130,19 @@ func TestBuiltQueries(t *testing.T) {
 				return true
 			},
 		},
+		{
+			name: "select from sub query",
+			run: func() bool {
+				q := b.Select(b.Raw("t.id"), b.Raw("t.title")).From(b.SelectFrom(b.Posts).As("t"))
+				got := q.Finalize()
+				want := newFinalQuery("SELECT t.id, t.title FROM (SELECT posts.id, posts.author_id, posts.title FROM posts) AS t")
+				if diff := cmp.Diff(got, want); diff != "" {
+					t.Errorf("wrong final query:%s", diff)
+					return false
+				}
+				return false
+			},
+		},
 	})
 }
 
