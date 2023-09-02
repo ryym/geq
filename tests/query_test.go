@@ -136,6 +136,41 @@ func TestBuiltQueries(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "insert query",
+			run: func() (err error) {
+				q := b.InsertInto(b.Users).
+					Values(
+						b.Users.ID.Set(1),
+						b.Users.Name.Set("name"),
+					).
+					ValueMaps(
+						geq.ValueMap{
+							b.Users.ID:   2,
+							b.Users.Name: "name2",
+						},
+						geq.ValueMap{
+							b.Users.ID:   "invalid-id",
+							b.Users.Name: b.Func("NOW"),
+						},
+					)
+
+				got, err := q.Finalize()
+				if err != nil {
+					return err
+				}
+				want := newFinalQuery(
+					"INSERT INTO users (id, name) VALUES (?, ?), (?, ?), (?, NOW())",
+					int64(1), "name",
+					2, "name2",
+					"invalid-id",
+				)
+				if diff := cmp.Diff(got, want); diff != "" {
+					return fmt.Errorf("wrong final query:%s", diff)
+				}
+				return nil
+			},
+		},
 	})
 }
 

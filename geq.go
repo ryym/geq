@@ -48,6 +48,10 @@ func Builder_SelectVia[S, T, C any](srcs []S, table Table[T], relship *Relship[S
 	return newQuery(table).From(table).Where(relship.In(srcs))
 }
 
+func Builder_InsertInto(table AnyTable) *InsertQuery {
+	return newInsertQuery(table)
+}
+
 func Builder_Func(name string, args ...any) Expr {
 	exprs := make([]Expr, 0, len(args))
 	for _, arg := range args {

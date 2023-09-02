@@ -55,6 +55,10 @@ func (c *Column[F]) In(values []F) Expr {
 	return implOps(&inExpr{operand: c, values: anyVals})
 }
 
+func (c *Column[F]) Set(value F) ValuePair {
+	return ValuePair{column: c, value: value}
+}
+
 func lift(v any) Expr {
 	switch val := v.(type) {
 	case Expr:

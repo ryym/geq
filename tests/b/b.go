@@ -54,6 +54,10 @@ func SelectVia[S, T, C any](srcs []S, from geq.Table[T], relship *geq.Relship[S,
 	return geq.Builder_SelectVia(srcs, from, relship)
 }
 
+func InsertInto(table geq.AnyTable) *geq.InsertQuery {
+	return geq.Builder_InsertInto(table)
+}
+
 func Func(name string, args ...any) geq.Expr {
 	return geq.Builder_Func(name, args...)
 }
