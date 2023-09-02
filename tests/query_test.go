@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -14,19 +15,18 @@ func TestBuiltQueries(t *testing.T) {
 	runTestCases(t, []testCase{
 		{
 			name: "basic select",
-			run: func() bool {
+			run: func() (err error) {
 				got := b.SelectFrom(b.Users).Finalize()
 				want := newFinalQuery("SELECT users.id, users.name FROM users")
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return true
+				return nil
 			},
 		},
 		{
 			name: "select via table relationship",
-			run: func() bool {
+			run: func() (err error) {
 				users := []mdl.User{
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
@@ -38,15 +38,14 @@ func TestBuiltQueries(t *testing.T) {
 					int64(2), int64(3),
 				)
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return true
+				return nil
 			},
 		},
 		{
 			name: "select with join using relationship",
-			run: func() bool {
+			run: func() (err error) {
 				q := b.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID)
 				got := q.Finalize()
 				want := newFinalQuery(
@@ -57,15 +56,14 @@ func TestBuiltQueries(t *testing.T) {
 					}, " "),
 				)
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return true
+				return nil
 			},
 		},
 		{
 			name: "select expressions",
-			run: func() bool {
+			run: func() (err error) {
 				q := b.Select(
 					b.Users.ID,
 					b.Users.Name.As("foo"),
@@ -78,15 +76,14 @@ func TestBuiltQueries(t *testing.T) {
 					3, "title",
 				)
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return true
+				return nil
 			},
 		},
 		{
 			name: "select function calls",
-			run: func() bool {
+			run: func() (err error) {
 				q := b.Select(
 					b.Count(b.Users.ID),
 					b.Max(b.Users.Name),
@@ -98,49 +95,45 @@ func TestBuiltQueries(t *testing.T) {
 					1,
 				)
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return true
+				return nil
 			},
 		},
 		{
 			name: "select with grouping",
-			run: func() bool {
+			run: func() (err error) {
 				q := b.SelectFrom(b.Users, b.Users.Name, b.Max(b.Users.ID)).GroupBy(b.Users.Name)
 				got := q.Finalize()
 				want := newFinalQuery("SELECT users.name, MAX(users.id) FROM users GROUP BY users.name")
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return true
+				return nil
 			},
 		},
 		{
 			name: "select with limit",
-			run: func() bool {
+			run: func() (err error) {
 				q := b.SelectFrom(b.Users, b.Users.ID).Limit(2)
 				got := q.Finalize()
 				want := newFinalQuery("SELECT users.id FROM users LIMIT 2")
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return true
+				return nil
 			},
 		},
 		{
 			name: "select from sub query",
-			run: func() bool {
+			run: func() (err error) {
 				q := b.Select(b.Raw("t.id"), b.Raw("t.title")).From(b.SelectFrom(b.Posts).As("t"))
 				got := q.Finalize()
 				want := newFinalQuery("SELECT t.id, t.title FROM (SELECT posts.id, posts.author_id, posts.title FROM posts) AS t")
 				if diff := cmp.Diff(got, want); diff != "" {
-					t.Errorf("wrong final query:%s", diff)
-					return false
+					return fmt.Errorf("wrong final query:%s", diff)
 				}
-				return false
+				return nil
 			},
 		},
 	})
