@@ -31,7 +31,7 @@ func TestResultMappings(t *testing.T) {
 			run: func() bool {
 				var users []mdl.User
 				q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
-				err := q.Scan(b.ToSlice(b.Users, &users)).Load(ctx, db)
+				err := q.WillScan(b.ToSlice(b.Users, &users)).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
@@ -52,7 +52,7 @@ func TestResultMappings(t *testing.T) {
 			run: func() bool {
 				var userMap map[int64]mdl.User
 				q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
-				err := q.Scan(b.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
+				err := q.WillScan(b.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
 				if err != nil {
 					t.Error(err)
 				}
@@ -74,7 +74,7 @@ func TestResultMappings(t *testing.T) {
 				var posts []mdl.Post
 				var userMap map[int64]mdl.User
 				q := b.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.ID)
-				err := q.Scan(
+				err := q.WillScan(
 					b.ToSlice(b.Posts, &posts),
 					b.ToMap(b.Users, b.Users.ID, &userMap),
 				).Load(ctx, db)

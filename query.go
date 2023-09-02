@@ -208,7 +208,7 @@ func (q *Query[R]) Load(ctx context.Context, db QueryRunner) (recs []R, err erro
 	return l.Load(ctx, db)
 }
 
-func (q *Query[R]) Scan(scanners ...RowsScanner) *MultiScanLoader[R] {
+func (q *Query[R]) WillScan(scanners ...RowsScanner) *MultiScanLoader[R] {
 	sels := make([]Selection, 0)
 	for _, s := range scanners {
 		sels = append(sels, s.Selections()...)
