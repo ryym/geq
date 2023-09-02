@@ -1,7 +1,6 @@
 package geq
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -9,7 +8,7 @@ type Expr interface {
 	Selection
 	As(name string) *Aliased
 	Eq(v any) Expr
-	appendQuery(p *queryPart)
+	appendExpr(w *queryWriter)
 }
 
 type Aliased struct {
@@ -39,8 +38,8 @@ func (c *Column[F]) ColumnName() string {
 	return c.columnName
 }
 
-func (c *Column[F]) appendQuery(p *queryPart) {
-	fmt.Fprintf(p.sb, "%s.%s", c.tableName, c.columnName)
+func (c *Column[F]) appendExpr(w *queryWriter) {
+	w.Printf("%s.%s", c.tableName, c.columnName)
 }
 
 func (c *Column[F]) In(values []F) Expr {
@@ -49,12 +48,6 @@ func (c *Column[F]) In(values []F) Expr {
 		anyVals = append(anyVals, v)
 	}
 	return implOps(&inExpr{operand: c, values: anyVals})
-}
-
-func buildExprPart(expr Expr) *queryPart {
-	p := &queryPart{sb: new(strings.Builder)}
-	expr.appendQuery(p)
-	return p
 }
 
 func lift(v any) Expr {
@@ -73,9 +66,8 @@ type litExpr struct {
 	val any
 }
 
-func (e *litExpr) appendQuery(p *queryPart) {
-	p.sb.WriteString("?")
-	p.args = append(p.args, e.val)
+func (e *litExpr) appendExpr(w *queryWriter) {
+	w.Write("?", e.val)
 }
 
 type infixExpr struct {
@@ -85,10 +77,10 @@ type infixExpr struct {
 	right Expr
 }
 
-func (e *infixExpr) appendQuery(p *queryPart) {
-	e.left.appendQuery(p)
-	fmt.Fprintf(p.sb, " %s ", e.op)
-	e.right.appendQuery(p)
+func (e *infixExpr) appendExpr(w *queryWriter) {
+	e.left.appendExpr(w)
+	w.Printf(" %s ", e.op)
+	e.right.appendExpr(w)
 }
 
 type inExpr struct {
@@ -97,13 +89,11 @@ type inExpr struct {
 	values  []any
 }
 
-func (e *inExpr) appendQuery(p *queryPart) {
+func (e *inExpr) appendExpr(w *queryWriter) {
 	placeholders := strings.Repeat(",?", len(e.values))[1:]
-	e.operand.appendQuery(p)
-	p.sb.WriteString(" IN (")
-	p.sb.WriteString(placeholders)
-	p.sb.WriteString(")")
-	p.args = append(p.args, e.values...)
+	e.operand.appendExpr(w)
+	w.Printf(" IN (%s)", placeholders)
+	w.Args = append(w.Args, e.values...)
 }
 
 type funcExpr struct {
@@ -112,14 +102,14 @@ type funcExpr struct {
 	args []Expr
 }
 
-func (e *funcExpr) appendQuery(p *queryPart) {
-	p.sb.WriteString(e.name)
-	p.sb.WriteRune('(')
+func (e *funcExpr) appendExpr(w *queryWriter) {
+	w.Write(e.name)
+	w.Write("(")
 	for i, arg := range e.args {
 		if i > 0 {
-			p.sb.WriteString(", ")
+			w.Write(", ")
 		}
-		arg.appendQuery(p)
+		arg.appendExpr(w)
 	}
-	p.sb.WriteRune(')')
+	w.Write(")")
 }

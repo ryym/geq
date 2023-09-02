@@ -8,7 +8,7 @@ import (
 
 type AnyTable interface {
 	TableName() string
-	appendTable(sb *strings.Builder)
+	appendTable(w *queryWriter)
 }
 
 type Table[R any] interface {
@@ -38,11 +38,11 @@ func (t *TableBase) Selections() []Selection {
 	return t.columns
 }
 
-func (t *TableBase) appendTable(sb *strings.Builder) {
-	sb.WriteString(t.tableName)
+func (t *TableBase) appendTable(w *queryWriter) {
+	w.Write(t.tableName)
 	if t.alias != "" {
-		sb.WriteString(" AS ")
-		sb.WriteString(t.alias)
+		w.Write(" AS ")
+		w.Write(t.alias)
 	}
 }
 
@@ -149,83 +149,72 @@ func (q *Query[R]) Limit(n uint) *Query[R] {
 }
 
 func (q *Query[R]) Finalize() *FinalQuery {
-	var sb strings.Builder
+	w := newQueryWriter()
 
-	appendQuery := func(s string, args []any) {
-		sb.WriteString(s)
-		q.args = append(q.args, args...)
-	}
-
-	sb.WriteString("SELECT ")
+	w.Write("SELECT ")
 	for i, sel := range q.selections {
 		if i > 0 {
-			sb.WriteString(", ")
+			w.Write(", ")
 		}
-		p := buildExprPart(sel.Expr())
-		appendQuery(p.String(), p.args)
+		sel.Expr().appendExpr(w)
 		alias := sel.Alias()
 		if alias != "" {
-			fmt.Fprintf(&sb, " AS %s", alias)
+			w.Printf(" AS %s", alias)
 		}
 	}
 
 	if q.from != nil {
-		sb.WriteString(" FROM ")
-		q.from.appendTable(&sb)
+		w.Write(" FROM ")
+		q.from.appendTable(w)
 	}
 
 	if len(q.innerJoins) > 0 {
 		for _, r := range q.innerJoins {
-			fmt.Fprintf(&sb, " INNER JOIN %s ON ", r.RightTableName())
+			w.Printf(" INNER JOIN %s ON ", r.RightTableName())
 			colL, colR := r.JoinColumns()
-			partL := buildExprPart(colL)
-			partR := buildExprPart(colR)
-			appendQuery(partL.String(), partL.args)
-			sb.WriteString(" = ")
-			appendQuery(partR.String(), partR.args)
+			colL.appendExpr(w)
+			w.Write(" = ")
+			colR.appendExpr(w)
 		}
 	}
 
 	if len(q.wheres) > 0 {
-		sb.WriteString(" WHERE ")
+		w.Write(" WHERE ")
 		for i, e := range q.wheres {
 			if i > 0 {
-				sb.WriteString(" AND ")
+				w.Write(" AND ")
 			}
-			part := buildExprPart(e)
-			appendQuery(part.String(), part.args)
+			e.appendExpr(w)
 		}
 	}
 
 	if len(q.groups) > 0 {
-		sb.WriteString(" GROUP BY ")
+		w.Write(" GROUP BY ")
 		for i, e := range q.groups {
 			if i > 0 {
-				sb.WriteString(", ")
+				w.Write(", ")
 			}
-			part := buildExprPart(e)
-			appendQuery(part.String(), part.args)
+			e.appendExpr(w)
 		}
 	}
 
 	if len(q.orders) > 0 {
-		sb.WriteString(" ORDER BY ")
-		for i, expr := range q.orders {
+		w.Write(" ORDER BY ")
+		for i, e := range q.orders {
 			if i > 0 {
-				sb.WriteString(", ")
+				w.Write(", ")
 			}
-			p := buildExprPart(expr)
-			appendQuery(p.String(), p.args)
+			e.appendExpr(w)
 		}
 	}
 
 	if q.limit > 0 {
-		fmt.Fprintf(&sb, " LIMIT %d", q.limit)
+		w.Printf(" LIMIT %d", q.limit)
 	}
 
 	return &FinalQuery{
-		Query: sb.String(),
-		Args:  q.args,
+		Query: w.String(),
+		Args:  w.Args,
 	}
 }
 
@@ -243,11 +232,24 @@ func (q *Query[R]) WillScan(scanners ...RowsScanner) *MultiScanLoader[R] {
 	return &MultiScanLoader[R]{query: q, scanners: scanners}
 }
 
-type queryPart struct {
+type queryWriter struct {
 	sb   *strings.Builder
-	args []any
+	Args []any
 }
 
-func (p *queryPart) String() string {
-	return p.sb.String()
+func newQueryWriter() *queryWriter {
+	return &queryWriter{sb: new(strings.Builder)}
+}
+
+func (w *queryWriter) String() string {
+	return w.sb.String()
+}
+
+func (w *queryWriter) Write(query string, args ...any) {
+	w.sb.WriteString(query)
+	w.Args = append(w.Args, args...)
+}
+
+func (w *queryWriter) Printf(format string, fmtargs ...any) {
+	fmt.Fprintf(w.sb, format, fmtargs...)
 }
