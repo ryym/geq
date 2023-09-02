@@ -56,17 +56,3 @@ func (t *PostsTable) FieldPtrs(p *mdl.Post) []any {
 func (t *PostsTable) As(alias string) *PostsTable {
 	return NewPostsTable(alias)
 }
-
-type QueryBuilder struct {
-	Users *UsersTable
-	Posts *PostsTable
-}
-
-func NewQueryBuilder() *QueryBuilder {
-	b := &QueryBuilder{
-		Users: NewUsersTable(""),
-		Posts: NewPostsTable(""),
-	}
-	b.Posts.Author = geq.NewRelship(b.Users, b.Posts.AuthorID, b.Users.ID)
-	return b
-}
