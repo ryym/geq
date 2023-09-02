@@ -6,18 +6,23 @@ import (
 
 type Expr interface {
 	Selection
-	As(name string) *Aliased
+	As(name string) Aliased
 	Eq(v any) Expr
 	appendExpr(w *queryWriter)
 }
 
-type Aliased struct {
+type Aliased interface {
+	Expr() Expr
+	Alias() string
+}
+
+type aliased struct {
 	expr  Expr
 	alias string
 }
 
-func (a *Aliased) Expr() Expr    { return a.expr }
-func (a *Aliased) Alias() string { return a.alias }
+func (a *aliased) Expr() Expr    { return a.expr }
+func (a *aliased) Alias() string { return a.alias }
 
 type AnyColumn interface {
 	Expr
@@ -54,7 +59,7 @@ func lift(v any) Expr {
 	switch val := v.(type) {
 	case Expr:
 		return val
-	case *Aliased:
+	case *aliased:
 		return val.expr
 	default:
 		return implOps(&litExpr{val: val})

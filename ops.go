@@ -19,8 +19,8 @@ func (o *ops) wrap(expr Expr) { o.expr = expr }
 func (o *ops) Expr() Expr    { return o.expr }
 func (o *ops) Alias() string { return "" }
 
-func (o *ops) As(alias string) *Aliased {
-	return &Aliased{expr: o.expr, alias: alias}
+func (o *ops) As(alias string) Aliased {
+	return &aliased{expr: o.expr, alias: alias}
 }
 
 func (o *ops) Eq(v any) Expr {
