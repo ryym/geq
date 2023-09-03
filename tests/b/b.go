@@ -7,10 +7,12 @@ import (
 
 var Users *schema.UsersTable
 var Posts *schema.PostsTable
+var Transactions *schema.TransactionsTable
 
 func init() {
 	Users = schema.NewUsersTable("")
 	Posts = schema.NewPostsTable("")
+	Transactions = schema.NewTransactionsTable("")
 	Posts.Author = geq.NewRelship(Users, Posts.AuthorID, Users.ID)
 }
 

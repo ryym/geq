@@ -58,3 +58,32 @@ func (t *PostsTable) FieldPtrs(p *mdl.Post) []any {
 func (t *PostsTable) As(alias string) *PostsTable {
 	return NewPostsTable(alias)
 }
+
+type TransactionsTable struct {
+	*geq.TableBase
+	ID          *geq.Column[uint32]
+	UserID      *geq.Column[uint32]
+	Amount      *geq.Column[int32]
+	Description *geq.Column[string]
+}
+
+func NewTransactionsTable(alias string) *TransactionsTable {
+	t := &TransactionsTable{
+		ID:          geq.NewColumn[uint32]("transactions", "id"),
+		UserID:      geq.NewColumn[uint32]("transactions", "user_id"),
+		Amount:      geq.NewColumn[int32]("transactions", "amount"),
+		Description: geq.NewColumn[string]("transactions", "description"),
+	}
+	columns := []geq.AnyColumn{t.ID, t.UserID, t.Amount, t.Description}
+	sels := []geq.Selection{t.ID, t.UserID, t.Amount, t.Description}
+	t.TableBase = geq.NewTableBase("transactions", alias, columns, sels)
+	return t
+}
+
+func (t *TransactionsTable) FieldPtrs(r *mdl.Transaction) []any {
+	return []any{&r.ID, &r.UserID, &r.Amount, &r.Description}
+}
+
+func (t *TransactionsTable) As(alias string) *TransactionsTable {
+	return NewTransactionsTable(alias)
+}

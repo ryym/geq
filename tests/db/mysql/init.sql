@@ -22,3 +22,12 @@ INSERT INTO posts (id, author_id, title) VALUES
   (4, 3, "user3-post1"),
   (5, 3, "user3-post2"),
   (6, 3, "user3-post3");
+
+DROP TABLE IF EXISTS transactions;
+CREATE TABLE IF NOT EXISTS transactions
+(
+  id          int unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  user_id     int unsigned NOT NULL,
+  amount      int          NOT NULL,
+  description varchar(256) NOT NULL
+) CHARACTER SET utf8mb4 collate utf8mb4_bin;

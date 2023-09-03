@@ -10,3 +10,10 @@ type Post struct {
 	AuthorID int64
 	Title    string
 }
+
+type Transaction struct {
+	ID          uint32
+	UserID      uint32
+	Amount      int32
+	Description string
+}
