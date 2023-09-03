@@ -52,6 +52,10 @@ func Builder_InsertInto(table AnyTable) *InsertQuery {
 	return newInsertQuery(table)
 }
 
+func Builder_Null() Expr {
+	return implOps(&nullExpr{})
+}
+
 func Builder_Func(name string, args ...any) Expr {
 	exprs := make([]Expr, 0, len(args))
 	for _, arg := range args {

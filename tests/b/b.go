@@ -58,6 +58,10 @@ func InsertInto(table geq.AnyTable) *geq.InsertQuery {
 	return geq.Builder_InsertInto(table)
 }
 
+func Null() geq.Expr {
+	return geq.Builder_Null()
+}
+
 func Func(name string, args ...any) geq.Expr {
 	return geq.Builder_Func(name, args...)
 }

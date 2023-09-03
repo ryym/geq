@@ -69,10 +69,11 @@ func TestBuiltQueries(t *testing.T) {
 					b.Users.Name.As("foo"),
 					b.Posts.ID.Eq(3),
 					b.Posts.Title.Eq("title").As("bar"),
+					b.Null(),
 				)
 				got := q.Finalize()
 				want := newFinalQuery(
-					"SELECT users.id, users.name AS foo, posts.id = ?, posts.title = ? AS bar",
+					"SELECT users.id, users.name AS foo, posts.id = ?, posts.title = ? AS bar, NULL",
 					3, "title",
 				)
 				if diff := cmp.Diff(got, want); diff != "" {
@@ -147,7 +148,7 @@ func TestBuiltQueries(t *testing.T) {
 					ValueMaps(
 						geq.ValueMap{
 							b.Users.ID:   2,
-							b.Users.Name: "name2",
+							b.Users.Name: nil,
 						},
 						geq.ValueMap{
 							b.Users.ID:   "invalid-id",
@@ -160,9 +161,9 @@ func TestBuiltQueries(t *testing.T) {
 					return err
 				}
 				want := newFinalQuery(
-					"INSERT INTO users (id, name) VALUES (?, ?), (?, ?), (?, NOW())",
+					"INSERT INTO users (id, name) VALUES (?, ?), (?, NULL), (?, NOW())",
 					int64(1), "name",
-					2, "name2",
+					2,
 					"invalid-id",
 				)
 				if diff := cmp.Diff(got, want); diff != "" {

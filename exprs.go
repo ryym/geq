@@ -60,6 +60,9 @@ func (c *Column[F]) Set(value F) ValuePair {
 }
 
 func lift(v any) Expr {
+	if v == nil {
+		return implOps(&nullExpr{})
+	}
 	switch val := v.(type) {
 	case Expr:
 		return val
@@ -68,6 +71,14 @@ func lift(v any) Expr {
 	default:
 		return implOps(&litExpr{val: val})
 	}
+}
+
+type nullExpr struct {
+	ops
+}
+
+func (e *nullExpr) appendExpr(w *queryWriter) {
+	w.Write("NULL")
 }
 
 type litExpr struct {
