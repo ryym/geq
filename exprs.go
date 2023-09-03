@@ -56,7 +56,7 @@ func (c *Column[F]) In(values []F) Expr {
 }
 
 func (c *Column[F]) Set(value F) ValuePair {
-	return ValuePair{column: c, value: value}
+	return ValuePair{column: c, value: toExpr(value)}
 }
 
 func toExpr(v any) Expr {
