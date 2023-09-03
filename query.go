@@ -7,9 +7,14 @@ import (
 	"strings"
 )
 
-type AnyTable interface {
+type TableLike interface {
 	TableName() string
 	appendTable(w *queryWriter)
+}
+
+type AnyTable interface {
+	TableLike
+	Columns() []AnyColumn
 }
 
 type Table[R any] interface {
@@ -18,16 +23,18 @@ type Table[R any] interface {
 }
 
 type TableBase struct {
-	tableName string
-	alias     string
-	columns   []Selection
+	tableName  string
+	alias      string
+	columns    []AnyColumn
+	selections []Selection
 }
 
-func NewTableBase(tableName string, alias string, columns []Selection) *TableBase {
+func NewTableBase(tableName string, alias string, columns []AnyColumn, sels []Selection) *TableBase {
 	return &TableBase{
-		tableName: tableName,
-		alias:     alias,
-		columns:   columns,
+		tableName:  tableName,
+		alias:      alias,
+		columns:    columns,
+		selections: sels,
 	}
 }
 
@@ -35,8 +42,12 @@ func (t *TableBase) TableName() string {
 	return t.tableName
 }
 
-func (t *TableBase) Selections() []Selection {
+func (t *TableBase) Columns() []AnyColumn {
 	return t.columns
+}
+
+func (t *TableBase) Selections() []Selection {
+	return t.selections
 }
 
 func (t *TableBase) appendTable(w *queryWriter) {
@@ -104,7 +115,7 @@ type FinalQuery struct {
 type Query[R any] struct {
 	mapper     RowMapper[R]
 	selections []Selection
-	from       AnyTable
+	from       TableLike
 	innerJoins []AnyRelship // For now.
 	wheres     []Expr
 	groups     []Expr
@@ -123,7 +134,7 @@ func (q *Query[R]) As(alias string) *QueryTable[R] {
 	return &QueryTable[R]{query: q, alias: alias}
 }
 
-func (q *Query[R]) From(table AnyTable) *Query[R] {
+func (q *Query[R]) From(table TableLike) *Query[R] {
 	q.from = table
 	return q
 }

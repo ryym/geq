@@ -16,8 +16,9 @@ func NewUsersTable(alias string) *UsersTable {
 		ID:   geq.NewColumn[int64]("users", "id"),
 		Name: geq.NewColumn[string]("users", "name"),
 	}
-	columns := []geq.Selection{t.ID, t.Name}
-	t.TableBase = geq.NewTableBase("users", alias, columns)
+	columns := []geq.AnyColumn{t.ID, t.Name}
+	sels := []geq.Selection{t.ID, t.Name}
+	t.TableBase = geq.NewTableBase("users", alias, columns, sels)
 	return t
 }
 
@@ -44,8 +45,9 @@ func NewPostsTable(alias string) *PostsTable {
 		AuthorID: geq.NewColumn[int64]("posts", "author_id"),
 		Title:    geq.NewColumn[string]("posts", "title"),
 	}
-	columns := []geq.Selection{t.ID, t.AuthorID, t.Title}
-	t.TableBase = geq.NewTableBase("posts", alias, columns)
+	columns := []geq.AnyColumn{t.ID, t.AuthorID, t.Title}
+	sels := []geq.Selection{t.ID, t.AuthorID, t.Title}
+	t.TableBase = geq.NewTableBase("posts", alias, columns, sels)
 	return t
 }
 
