@@ -23,7 +23,7 @@ func newInsertQuery(table AnyTable) *InsertQuery {
 func (q *InsertQuery) Values(sets ...ValuePair) *InsertQuery {
 	m := make(map[AnyColumn]Expr, len(sets))
 	for _, p := range sets {
-		m[p.column] = lift(p.value)
+		m[p.column] = toExpr(p.value)
 	}
 	q.rowValues = append(q.rowValues, m)
 	return q
@@ -34,7 +34,7 @@ func (q *InsertQuery) ValueMaps(vms ...ValueMap) *InsertQuery {
 	for _, vm := range vms {
 		em := make(map[AnyColumn]Expr, len(vm))
 		for k, v := range vm {
-			em[k] = lift(v)
+			em[k] = toExpr(v)
 		}
 		ems = append(ems, em)
 	}

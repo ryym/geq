@@ -59,7 +59,7 @@ func Builder_Null() Expr {
 func Builder_Func(name string, args ...any) Expr {
 	exprs := make([]Expr, 0, len(args))
 	for _, arg := range args {
-		exprs = append(exprs, lift(arg))
+		exprs = append(exprs, toExpr(arg))
 	}
 	return implOps(&funcExpr{name: name, args: exprs})
 }

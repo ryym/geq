@@ -59,7 +59,7 @@ func (c *Column[F]) Set(value F) ValuePair {
 	return ValuePair{column: c, value: value}
 }
 
-func lift(v any) Expr {
+func toExpr(v any) Expr {
 	if v == nil {
 		return implOps(&nullExpr{})
 	}

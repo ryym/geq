@@ -26,7 +26,7 @@ func (o *ops) As(alias string) Aliased {
 func (o *ops) Eq(v any) Expr {
 	return implOps(&infixExpr{
 		left:  o.expr,
-		right: lift(v),
+		right: toExpr(v),
 		op:    "=",
 	})
 }
