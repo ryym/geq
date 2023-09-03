@@ -172,6 +172,28 @@ func TestBuiltQueries(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "update query",
+			run: func() (err error) {
+				q := b.Update(b.Users).Set(
+					b.Users.ID.Set(1),
+					b.Users.Name.Set("name"),
+				).Where(b.Users.ID.In([]int64{1, 2}))
+
+				got, err := q.Finalize()
+				if err != nil {
+					return err
+				}
+				want := newFinalQuery(
+					"UPDATE users SET id = ?, name = ? WHERE users.id IN (?,?)",
+					int64(1), "name", int64(1), int64(2),
+				)
+				if diff := cmp.Diff(got, want); diff != "" {
+					return fmt.Errorf("wrong final query:%s", diff)
+				}
+				return nil
+			},
+		},
 	})
 }
 

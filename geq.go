@@ -52,6 +52,10 @@ func Builder_InsertInto(table AnyTable) *InsertQuery {
 	return newInsertQuery(table)
 }
 
+func Builder_Update(table AnyTable) *UpdateQuery {
+	return newUpdateQuery(table)
+}
+
 func Builder_Null() Expr {
 	return implOps(&nullExpr{})
 }
