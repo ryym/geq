@@ -1,6 +1,6 @@
 package main
 
-import "github.om/ryym/geq/examples/helloworld/mdl"
+import "github.com/ryym/geq/examples/helloworld/mdl"
 
 //geq:package ./gen/b
 
