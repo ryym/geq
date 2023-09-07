@@ -12,6 +12,9 @@ type GeqTables struct {
 }
 
 type GeqRelationships struct {
+	Users struct {
+		Posts mdl.Post `geq:"Users.ID = Posts.AuthorID"`
+	}
 	Posts struct {
 		Author mdl.User `geq:"Posts.AuthorID = Users.ID"`
 	}

@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"errors"
 	"fmt"
 	"go/types"
 	"os"
@@ -52,13 +51,9 @@ func genRowsFile(rootPath string, pkg *packages.Package) (err error) {
 }
 
 func buildRowsFileDef(pkg *packages.Package) (def *rowsFileDef, err error) {
-	rowsObj := pkg.Types.Scope().Lookup("GeqRows")
-	if rowsObj == nil {
-		return nil, errors.New("no GeqRows struct found")
-	}
-	rowsStruct, ok := rowsObj.Type().Underlying().(*types.Struct)
-	if !ok {
-		return nil, errors.New("GeqRows must be struct")
+	rowsStruct, err := lookupStruct(pkg, "GeqRows")
+	if err != nil {
+		return nil, err
 	}
 
 	nFields := rowsStruct.NumFields()

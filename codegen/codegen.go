@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+	"unicode"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -38,6 +39,11 @@ func Run(cfg *Config) (err error) {
 		return nil
 	})
 
+	err = genBuildersFiles(bldPaths)
+	if err != nil {
+		panic(err)
+	}
+
 	err = genRowsFiles(rowsPaths)
 	if err != nil {
 		return err
@@ -46,15 +52,15 @@ func Run(cfg *Config) (err error) {
 	return nil
 }
 
-func genBuilderPkgs(bldPaths []string) (err error) {
-	pkgCfg := &packages.Config{Mode: packages.NeedFiles | packages.NeedTypes}
-	pkgs, err := loadPkgs(pkgCfg, bldPaths...)
-	if err != nil {
-		return err
-	}
-	for _, pkg := range pkgs {
-		fmt.Println("geqbld.go in", pkg.ID)
-		err = genBuilderPkg(pkg)
+func genBuildersFiles(bldPaths []string) (err error) {
+	pkgCfg := &packages.Config{Mode: packages.NeedName | packages.NeedFiles | packages.NeedTypes | packages.NeedSyntax}
+	for _, bldPath := range bldPaths {
+		pkgs, err := loadPkgs(pkgCfg, bldPath)
+		if err != nil {
+			return err
+		}
+		pkg := pkgs[0]
+		err = genBuilderFile(bldPath, pkg)
 		if err != nil {
 			return fmt.Errorf("builder generation failed at: %s: %w", pkg.ID, err)
 		}
@@ -92,33 +98,23 @@ func loadPkgs(cfg *packages.Config, patterns ...string) ([]*packages.Package, er
 	return pkgs, nil
 }
 
-func genBuilderPkg(pkg *packages.Package) (err error) {
-	tablesObj := pkg.Types.Scope().Lookup("GeqTables")
-	if tablesObj == nil {
-		return errors.New("no GeqTables struct found")
-	}
-	tablesStruct, ok := tablesObj.Type().Underlying().(*types.Struct)
-	if !ok {
-		return errors.New("GeqTables must be struct")
-	}
-	for i := 0; i < tablesStruct.NumFields(); i++ {
-		field := tablesStruct.Field(i)
-		fieldTypeNamed, ok := field.Type().(*types.Named)
-		if !ok {
-			return fmt.Errorf("type of GeqTables field %s is invalid", field.Name())
-		}
-		fieldType := fieldTypeNamed.Obj()
-		fmt.Println(field.Name(), fieldType.Name(), fieldType.Pkg().Path())
-	}
-
-	return nil
-}
-
 func absPath(wd string, path string) string {
 	if filepath.IsAbs(path) {
 		return filepath.Clean(path)
 	}
 	return filepath.Join(wd, path)
+}
+
+func lookupStruct(pkg *packages.Package, name string) (strct *types.Struct, err error) {
+	obj := pkg.Types.Scope().Lookup(name)
+	if obj == nil {
+		return nil, fmt.Errorf("no %s struct found", name)
+	}
+	strct, ok := obj.Type().Underlying().(*types.Struct)
+	if !ok {
+		return nil, fmt.Errorf("%s must be struct", name)
+	}
+	return strct, nil
 }
 
 func buildGoCode(name string, codeTmpl string, data any) (src []byte, err error) {
@@ -131,14 +127,51 @@ func buildGoCode(name string, codeTmpl string, data any) (src []byte, err error)
 
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate rows file: %w", err)
+		return nil, fmt.Errorf("failed to generate Go code: %w", err)
 	}
 
 	src, err = format.Source(buf.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to format rows file: %w", err)
+		return nil, fmt.Errorf("failed to format Go code: %w", err)
 	}
 	return src, nil
+}
+
+func writeFile(dir, fileName string, content []byte) (err error) {
+	file, err := os.Create(filepath.Join(dir, fileName))
+	if err != nil {
+		return fmt.Errorf("failed to create %s: %w", fileName, err)
+	}
+	defer file.Close()
+
+	_, err = file.Write(content)
+	if err != nil {
+		return fmt.Errorf("failed to write %s: %w", fileName, err)
+	}
+
+	return nil
+}
+
+func toSnake(s string) string {
+	if s == "" {
+		return s
+	}
+
+	src := []rune(s)
+	out := []rune{unicode.ToLower(src[0])}
+	lastIdx := len(src) - 1
+	for i := 1; i <= lastIdx; i++ {
+		if unicode.IsUpper(src[i]) {
+			if !unicode.IsUpper(src[i-1]) || (i < lastIdx && !unicode.IsUpper(src[i+1])) {
+				out = append(out, '_')
+			}
+			out = append(out, unicode.ToLower(src[i]))
+		} else {
+			out = append(out, src[i])
+		}
+	}
+
+	return string(out)
 }
 
 const autoGenWarning = `
