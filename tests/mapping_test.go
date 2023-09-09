@@ -41,7 +41,7 @@ func TestResultMappings(t *testing.T) {
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
 				}
-				if diff := cmp.Diff(users, want); diff != "" {
+				if diff := cmp.Diff(want, users); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -61,7 +61,7 @@ func TestResultMappings(t *testing.T) {
 					2: {ID: 2, Name: "user2"},
 					3: {ID: 3, Name: "user3"},
 				}
-				if diff := cmp.Diff(userMap, want); diff != "" {
+				if diff := cmp.Diff(want, userMap); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -90,7 +90,7 @@ func TestResultMappings(t *testing.T) {
 						{ID: 6, AuthorID: 3, Title: "user3-post3"},
 					},
 				}
-				if diff := cmp.Diff(postsMap, want); diff != "" {
+				if diff := cmp.Diff(want, postsMap); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -117,7 +117,7 @@ func TestResultMappings(t *testing.T) {
 					{ID: 5, AuthorID: 3, Title: "user3-post2"},
 					{ID: 6, AuthorID: 3, Title: "user3-post3"},
 				}
-				if diff := cmp.Diff(posts, wantPostSlice); diff != "" {
+				if diff := cmp.Diff(wantPostSlice, posts); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				wantUserMap := map[int64]mdl.User{
@@ -125,7 +125,7 @@ func TestResultMappings(t *testing.T) {
 					2: {ID: 2, Name: "user2"},
 					3: {ID: 3, Name: "user3"},
 				}
-				if diff := cmp.Diff(userMap, wantUserMap); diff != "" {
+				if diff := cmp.Diff(wantUserMap, userMap); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -143,7 +143,7 @@ func TestResultMappings(t *testing.T) {
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
 				}
-				if diff := cmp.Diff(users, want); diff != "" {
+				if diff := cmp.Diff(want, users); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -161,7 +161,7 @@ func TestResultMappings(t *testing.T) {
 					"user2": {ID: 2, Name: "user2"},
 					"user3": {ID: 3, Name: "user3"},
 				}
-				if diff := cmp.Diff(userMap, want); diff != "" {
+				if diff := cmp.Diff(want, userMap); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -189,7 +189,7 @@ func TestResultMappings(t *testing.T) {
 						{ID: 6, AuthorID: 3, Title: "user3-post3"},
 					},
 				}
-				if diff := cmp.Diff(postsMap, want); diff != "" {
+				if diff := cmp.Diff(want, postsMap); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -216,7 +216,7 @@ func TestResultMappings(t *testing.T) {
 					{AuthorID: 2, PostCount: 1, LastTitle: "user2-post1"},
 					{AuthorID: 3, PostCount: 3, LastTitle: "user3-post3"},
 				}
-				if diff := cmp.Diff(stats, want); diff != "" {
+				if diff := cmp.Diff(want, stats); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -230,7 +230,7 @@ func TestResultMappings(t *testing.T) {
 					t.Error(err)
 				}
 				want := []int64{1, 2, 3}
-				if diff := cmp.Diff(ids, want); diff != "" {
+				if diff := cmp.Diff(want, ids); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil
@@ -253,7 +253,7 @@ func TestResultMappings(t *testing.T) {
 				}
 
 				want := [][]int{{-7, 1, 2}, {-7, 2, 3}, {-7, 3, 6}}
-				if diff := cmp.Diff(results, want); diff != "" {
+				if diff := cmp.Diff(want, results); diff != "" {
 					return fmt.Errorf("wrong result:%s", diff)
 				}
 				return nil

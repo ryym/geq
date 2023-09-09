@@ -18,7 +18,7 @@ func TestBuiltQueries(t *testing.T) {
 			run: func() (err error) {
 				got := b.SelectFrom(b.Users).Finalize()
 				want := newFinalQuery("SELECT users.id, users.name FROM users")
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -37,7 +37,7 @@ func TestBuiltQueries(t *testing.T) {
 					"SELECT posts.id, posts.author_id, posts.title FROM posts WHERE posts.author_id IN (?,?)",
 					int64(2), int64(3),
 				)
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -55,7 +55,7 @@ func TestBuiltQueries(t *testing.T) {
 						"ORDER BY posts.author_id",
 					}, " "),
 				)
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -76,7 +76,7 @@ func TestBuiltQueries(t *testing.T) {
 					"SELECT users.id, users.name AS foo, posts.id = ?, posts.title = ? AS bar, NULL",
 					3, "title",
 				)
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -95,7 +95,7 @@ func TestBuiltQueries(t *testing.T) {
 					"SELECT COUNT(users.id), MAX(users.name), MYFUNC(?, users.id)",
 					1,
 				)
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -107,7 +107,7 @@ func TestBuiltQueries(t *testing.T) {
 				q := b.SelectFrom(b.Users, b.Users.Name, b.Max(b.Users.ID)).GroupBy(b.Users.Name)
 				got := q.Finalize()
 				want := newFinalQuery("SELECT users.name, MAX(users.id) FROM users GROUP BY users.name")
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -119,7 +119,7 @@ func TestBuiltQueries(t *testing.T) {
 				q := b.SelectFrom(b.Users, b.Users.ID).Limit(2)
 				got := q.Finalize()
 				want := newFinalQuery("SELECT users.id FROM users LIMIT 2")
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -131,7 +131,7 @@ func TestBuiltQueries(t *testing.T) {
 				q := b.Select(b.Raw("t.id"), b.Raw("t.title")).From(b.SelectFrom(b.Posts).As("t"))
 				got := q.Finalize()
 				want := newFinalQuery("SELECT t.id, t.title FROM (SELECT posts.id, posts.author_id, posts.title FROM posts) AS t")
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -166,7 +166,7 @@ func TestBuiltQueries(t *testing.T) {
 					2,
 					"invalid-id",
 				)
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
@@ -188,7 +188,7 @@ func TestBuiltQueries(t *testing.T) {
 					"UPDATE users SET id = ?, name = ? WHERE users.id IN (?,?)",
 					int64(1), "name", int64(1), int64(2),
 				)
-				if diff := cmp.Diff(got, want); diff != "" {
+				if diff := cmp.Diff(want, got); diff != "" {
 					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
