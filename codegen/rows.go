@@ -3,8 +3,6 @@ package codegen
 import (
 	"fmt"
 	"go/types"
-	"os"
-	"path/filepath"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -36,28 +34,34 @@ func genRowsFile(rootPath string, pkg *packages.Package) (err error) {
 		return err
 	}
 
-	file, err := os.Create(filepath.Join(rootPath, "geqrows.gen.go"))
+	err = writeFile(rootPath, "geqrows.gen.go", src)
 	if err != nil {
-		return fmt.Errorf("failed to create rows file: %w", err)
-	}
-	defer file.Close()
-
-	_, err = file.Write(src)
-	if err != nil {
-		return fmt.Errorf("failed to write rows file: %w", err)
+		return err
 	}
 
 	return nil
 }
 
 func buildRowsFileDef(pkg *packages.Package) (def *rowsFileDef, err error) {
+	mappers, err := parseRowMappers(pkg)
+	if err != nil {
+		return nil, err
+	}
+	return &rowsFileDef{
+		PkgName:    pkg.Name,
+		Imports:    []string{geqPkgPath},
+		RowMappers: mappers,
+	}, nil
+}
+
+func parseRowMappers(pkg *packages.Package) (mappers []rowMapperDef, err error) {
 	rowsStruct, err := lookupStruct(pkg, "GeqRows")
 	if err != nil {
 		return nil, err
 	}
 
 	nFields := rowsStruct.NumFields()
-	mappers := make([]rowMapperDef, 0, nFields)
+	mappers = make([]rowMapperDef, 0, nFields)
 	for i := 0; i < nFields; i++ {
 		field := rowsStruct.Field(i)
 		fieldType, ok := field.Type().(*types.Named)
@@ -88,11 +92,7 @@ func buildRowsFileDef(pkg *packages.Package) (def *rowsFileDef, err error) {
 		})
 	}
 
-	return &rowsFileDef{
-		PkgName:    pkg.Name,
-		Imports:    []string{"github.com/ryym/geq"},
-		RowMappers: mappers,
-	}, nil
+	return mappers, nil
 }
 
 const rowsFileTmpl = `

@@ -14,6 +14,8 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+const geqPkgPath = "github.com/ryym/geq"
+
 type Config struct {
 	RootPath string
 }
@@ -26,7 +28,7 @@ func Run(cfg *Config) (err error) {
 
 	bldPaths := make([]string, 0)
 	rowsPaths := make([]string, 0)
-	filepath.Walk(cfg.RootPath, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(cfg.RootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -38,10 +40,13 @@ func Run(cfg *Config) (err error) {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	err = genBuildersFiles(bldPaths)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = genRowsFiles(rowsPaths)
