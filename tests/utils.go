@@ -1,18 +1,45 @@
 package tests
 
-import "testing"
+import (
+	"database/sql"
+	"testing"
+)
 
 type testCase struct {
 	name string
-	run  func() error
+	data string
+	run  func(*sql.Tx) error
 }
 
-func runTestCases(t *testing.T, cases []testCase) {
+func runTestCases(t *testing.T, db *sql.DB, cases []testCase) {
 	for i, c := range cases {
-		err := c.run()
+		runTestCase(t, db, i, c)
+	}
+}
+
+func runTestCase(t *testing.T, db *sql.DB, idx int, c testCase) {
+	tx, err := db.Begin()
+	if err != nil {
+		t.Fatalf("failed to begin tx: %v", err)
+	}
+
+	defer func() {
+		err = tx.Rollback()
 		if err != nil {
-			t.Logf("failed: case[%d] %s", i, c.name)
-			t.Error(err)
+			t.Fatalf("failed to rollback tx: %v", err)
 		}
+	}()
+
+	if c.data != "" {
+		_, err = tx.Exec(c.data)
+		if err != nil {
+			t.Fatalf("failed to execute data query: %v\nquery: %s", err, c.data)
+		}
+	}
+
+	err = c.run(tx)
+	if err != nil {
+		t.Logf("FAILED: case[%d] %s", idx, c.name)
+		t.Error(err)
 	}
 }

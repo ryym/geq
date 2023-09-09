@@ -45,12 +45,14 @@ func (q *UpdateQuery) Finalize() (fq *FinalQuery, err error) {
 		return nil, errors.New("[geq.Update] values empty")
 	}
 
-	for i, c := range q.table.Columns() {
-		if i > 0 {
+	setWritten := false
+	for _, c := range q.table.Columns() {
+		if setWritten {
 			w.Write(", ")
 		}
 		v, ok := q.valueMap[c]
 		if ok {
+			setWritten = true
 			w.Write(c.ColumnName())
 			w.Write(" = ")
 			v.appendExpr(w)
