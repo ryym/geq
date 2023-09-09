@@ -1,4 +1,4 @@
-package inner
+package reports
 
 //geq:file ./geqrows.gen.go
 
