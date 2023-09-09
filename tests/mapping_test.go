@@ -12,8 +12,6 @@ import (
 	"github.com/ryym/geq/tests/mdl"
 )
 
-// type Value
-
 func TestResultMappings(t *testing.T) {
 	db, err := sql.Open("mysql", "root:root@tcp(:3990)/geq")
 	if err != nil {
