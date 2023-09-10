@@ -15,29 +15,37 @@ import (
 )
 
 func TestPostgreSQL(t *testing.T) {
-	db, err := sql.Open("postgres", "port=3991 user=geq password=geq sslmode=disable")
+	db, err := openDB("postgres", "port=3991 user=geq password=geq sslmode=disable")
 	if err != nil {
-		t.Fatalf("failed to open DB: %v", err)
+		t.Fatal(err)
 	}
 	defer db.Close()
-	if err = db.Ping(); err != nil {
-		t.Fatalf("failed to ping to DB: %v", err)
-	}
+
 	geq.SetDefaultDialect(&geq.DialectPostgres{})
 	runIntegrationTest(t, db)
 }
 
 func TestMySQL(t *testing.T) {
-	db, err := sql.Open("mysql", "root:root@tcp(:3990)/geq")
+	db, err := openDB("mysql", "root:root@tcp(:3990)/geq")
 	if err != nil {
-		t.Fatalf("failed to open DB: %v", err)
+		t.Fatal(err)
 	}
 	defer db.Close()
-	if err = db.Ping(); err != nil {
-		t.Fatalf("failed to ping to DB: %v", err)
-	}
+
 	geq.SetDefaultDialect(&geq.DialectMySQL{})
 	runIntegrationTest(t, db)
+}
+
+func openDB(driver, dsn string) (db *sql.DB, err error) {
+	db, err = sql.Open(driver, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open DB: %w", err)
+	}
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("failed to ping to DB: %w", err)
+	}
+	return db, nil
 }
 
 func runIntegrationTest(t *testing.T, db *sql.DB) {
