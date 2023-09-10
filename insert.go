@@ -43,8 +43,9 @@ func (q *InsertQuery) ValueMaps(vms ...ValueMap) *InsertQuery {
 }
 
 func (q *InsertQuery) Finalize() (fq *FinalQuery, err error) {
+	cfg := &QueryConfig{dialect: defaultDialect}
 	w := newQueryWriter()
-	w.Printf("INSERT INTO %s ", q.table.TableName())
+	w.Printf("INSERT INTO %s ", cfg.dialect.Ident(q.table.TableName()))
 
 	if len(q.valueMaps) == 0 {
 		return nil, errors.New("[geq.InsertInto] no values provided")
@@ -91,7 +92,7 @@ func (q *InsertQuery) Finalize() (fq *FinalQuery, err error) {
 			if !ok {
 				return nil, errors.New("[geq.InsertInto] values columns not match")
 			}
-			v.appendExpr(w)
+			v.appendExpr(w, cfg)
 		}
 		w.Write(")")
 	}

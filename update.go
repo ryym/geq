@@ -40,9 +40,11 @@ func (q *UpdateQuery) Where(exprs ...Expr) *UpdateQuery {
 }
 
 func (q *UpdateQuery) Finalize() (fq *FinalQuery, err error) {
+	cfg := &QueryConfig{dialect: defaultDialect}
+
 	w := newQueryWriter()
 	w.Write("UPDATE ")
-	w.Write(q.table.TableName())
+	w.Write(cfg.dialect.Ident(q.table.TableName()))
 	w.Write(" SET ")
 
 	if len(q.valueMap) == 0 {
@@ -57,9 +59,9 @@ func (q *UpdateQuery) Finalize() (fq *FinalQuery, err error) {
 		v, ok := q.valueMap[c]
 		if ok {
 			setWritten = true
-			w.Write(c.ColumnName())
+			w.Write(cfg.dialect.Ident(c.ColumnName()))
 			w.Write(" = ")
-			v.appendExpr(w)
+			v.appendExpr(w, cfg)
 		}
 	}
 
@@ -69,7 +71,7 @@ func (q *UpdateQuery) Finalize() (fq *FinalQuery, err error) {
 			if i > 0 {
 				w.Write(" AND ")
 			}
-			e.appendExpr(w)
+			e.appendExpr(w, cfg)
 		}
 	}
 

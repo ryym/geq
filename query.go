@@ -15,6 +15,10 @@ type QueryExecutor interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
+type QueryConfig struct {
+	dialect Dialect
+}
+
 type TableLike interface {
 	TableName() string
 	appendTable(w *queryWriter)
@@ -177,6 +181,7 @@ func (q *Query[R]) Limit(n uint) *Query[R] {
 }
 
 func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
+	cfg := &QueryConfig{dialect: defaultDialect}
 	w := newQueryWriter()
 
 	w.Write("SELECT ")
@@ -184,7 +189,7 @@ func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 		if i > 0 {
 			w.Write(", ")
 		}
-		sel.Expr().appendExpr(w)
+		sel.Expr().appendExpr(w, cfg)
 		alias := sel.Alias()
 		if alias != "" {
 			w.Printf(" AS %s", alias)
@@ -198,11 +203,11 @@ func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 
 	if len(q.innerJoins) > 0 {
 		for _, r := range q.innerJoins {
-			w.Printf(" INNER JOIN %s ON ", r.RightTableName())
+			w.Printf(" INNER JOIN %s ON ", cfg.dialect.Ident(r.RightTableName()))
 			colL, colR := r.JoinColumns()
-			colL.appendExpr(w)
+			colL.appendExpr(w, cfg)
 			w.Write(" = ")
-			colR.appendExpr(w)
+			colR.appendExpr(w, cfg)
 		}
 	}
 
@@ -212,7 +217,7 @@ func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 			if i > 0 {
 				w.Write(" AND ")
 			}
-			e.appendExpr(w)
+			e.appendExpr(w, cfg)
 		}
 	}
 
@@ -222,7 +227,7 @@ func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 			if i > 0 {
 				w.Write(", ")
 			}
-			e.appendExpr(w)
+			e.appendExpr(w, cfg)
 		}
 	}
 
@@ -232,7 +237,7 @@ func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 			if i > 0 {
 				w.Write(", ")
 			}
-			e.appendExpr(w)
+			e.appendExpr(w, cfg)
 		}
 	}
 

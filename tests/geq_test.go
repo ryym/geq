@@ -293,7 +293,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 				q := b.SelectVia(users, b.Posts, b.Posts.Author)
 				err = assertQuery(q, sjoin(
 					"SELECT posts.id, posts.author_id, posts.title FROM posts",
-					"WHERE posts.author_id IN (?,?)",
+					"WHERE posts.author_id IN (?, ?)",
 				), int64(2), int64(3))
 				if err != nil {
 					return err
@@ -448,7 +448,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					b.Posts.Title.Set("title"),
 				).Where(b.Posts.ID.In([]int64{3, 4}))
 				err = assertQuery(q, sjoin(
-					"UPDATE posts SET author_id = ?, title = ? WHERE posts.id IN (?,?)",
+					"UPDATE posts SET author_id = ?, title = ? WHERE posts.id IN (?, ?)",
 				), int64(1), "title", int64(3), int64(4))
 				if err != nil {
 					return err

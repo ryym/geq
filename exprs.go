@@ -1,14 +1,10 @@
 package geq
 
-import (
-	"strings"
-)
-
 type Expr interface {
 	Selection
 	As(name string) Aliased
 	Eq(v any) Expr
-	appendExpr(w *queryWriter)
+	appendExpr(w *queryWriter, c *QueryConfig)
 }
 
 type Aliased interface {
@@ -43,8 +39,8 @@ func (c *Column[F]) ColumnName() string {
 	return c.columnName
 }
 
-func (c *Column[F]) appendExpr(w *queryWriter) {
-	w.Printf("%s.%s", c.tableName, c.columnName)
+func (c *Column[F]) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	w.Printf("%s.%s", cfg.dialect.Ident(c.tableName), cfg.dialect.Ident(c.columnName))
 }
 
 func (c *Column[F]) In(values []F) Expr {
@@ -77,7 +73,7 @@ type nullExpr struct {
 	ops
 }
 
-func (e *nullExpr) appendExpr(w *queryWriter) {
+func (e *nullExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write("NULL")
 }
 
@@ -86,8 +82,8 @@ type litExpr struct {
 	val any
 }
 
-func (e *litExpr) appendExpr(w *queryWriter) {
-	w.Write("?", e.val)
+func (e *litExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	w.Write(cfg.dialect.Placeholder("", w.Args), e.val)
 }
 
 type infixExpr struct {
@@ -97,10 +93,10 @@ type infixExpr struct {
 	right Expr
 }
 
-func (e *infixExpr) appendExpr(w *queryWriter) {
-	e.left.appendExpr(w)
+func (e *infixExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	e.left.appendExpr(w, cfg)
 	w.Printf(" %s ", e.op)
-	e.right.appendExpr(w)
+	e.right.appendExpr(w, cfg)
 }
 
 type inExpr struct {
@@ -109,11 +105,18 @@ type inExpr struct {
 	values  []any
 }
 
-func (e *inExpr) appendExpr(w *queryWriter) {
-	placeholders := strings.Repeat(",?", len(e.values))[1:]
-	e.operand.appendExpr(w)
-	w.Printf(" IN (%s)", placeholders)
-	w.Args = append(w.Args, e.values...)
+func (e *inExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	e.operand.appendExpr(w, cfg)
+	w.Write(" IN (")
+	if len(e.values) > 0 {
+		for i, v := range e.values {
+			if i > 0 {
+				w.Write(", ")
+			}
+			toExpr(v).appendExpr(w, cfg)
+		}
+	}
+	w.Write(")")
 }
 
 type funcExpr struct {
@@ -122,14 +125,14 @@ type funcExpr struct {
 	args []Expr
 }
 
-func (e *funcExpr) appendExpr(w *queryWriter) {
+func (e *funcExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(e.name)
 	w.Write("(")
 	for i, arg := range e.args {
 		if i > 0 {
 			w.Write(", ")
 		}
-		arg.appendExpr(w)
+		arg.appendExpr(w, cfg)
 	}
 	w.Write(")")
 }
@@ -140,6 +143,6 @@ type rawExpr struct {
 	args []any
 }
 
-func (e *rawExpr) appendExpr(w *queryWriter) {
+func (e *rawExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(e.expr, e.args...)
 }
