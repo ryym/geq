@@ -1,5 +1,14 @@
 package geq
 
+var defaultDialect Dialect = &DialectGeneric{}
+
+func SetDefaultDialect(d Dialect) {
+	defaultDialect = d
+}
+
+// The functions below are not intended to be used directly.
+// These are used via auto-generated query builder.
+
 func Builder_AsMap[R any, K comparable](key *Column[K], q *Query[R]) *MapLoader[R, R, K] {
 	return &MapLoader[R, R, K]{query: q, mapper: q.mapper, key: key}
 }
