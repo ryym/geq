@@ -16,7 +16,10 @@ type QueryRunner interface {
 }
 
 func (ms *MultiScanLoader[Q]) Load(ctx context.Context, db QueryRunner) (err error) {
-	q := ms.query.Finalize()
+	q, err := ms.query.Finalize()
+	if err != nil {
+		return err
+	}
 	rows, err := db.QueryContext(ctx, q.Query, q.Args...)
 	if err != nil {
 		return err
@@ -91,7 +94,10 @@ func (l *SliceMapLoader[Q, R, K]) Load(ctx context.Context, db QueryRunner) (map
 }
 
 func loadBySingleScanner[Q any](ctx context.Context, db QueryRunner, s RowsScanner, q *Query[Q]) (err error) {
-	fq := q.Finalize()
+	fq, err := q.Finalize()
+	if err != nil {
+		return err
+	}
 	rows, err := db.QueryContext(ctx, fq.Query, fq.Args...)
 	if err != nil {
 		return err

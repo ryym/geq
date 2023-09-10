@@ -164,7 +164,7 @@ func (q *Query[R]) Limit(n uint) *Query[R] {
 	return q
 }
 
-func (q *Query[R]) Finalize() *FinalQuery {
+func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 	w := newQueryWriter()
 
 	w.Write("SELECT ")
@@ -228,10 +228,12 @@ func (q *Query[R]) Finalize() *FinalQuery {
 		w.Printf(" LIMIT %d", q.limit)
 	}
 
+	// Check w.errs
+
 	return &FinalQuery{
 		Query: w.String(),
 		Args:  w.Args,
-	}
+	}, nil
 }
 
 func (q *Query[R]) Load(ctx context.Context, db QueryRunner) (recs []R, err error) {
@@ -240,7 +242,10 @@ func (q *Query[R]) Load(ctx context.Context, db QueryRunner) (recs []R, err erro
 }
 
 func (q *Query[R]) LoadRows(ctx context.Context, db QueryRunner) (rows *sql.Rows, err error) {
-	fq := q.Finalize()
+	fq, err := q.Finalize()
+	if err != nil {
+		return nil, err
+	}
 	return db.QueryContext(ctx, fq.Query, fq.Args...)
 }
 
@@ -267,7 +272,10 @@ func (t *QueryTable[R]) Alias() string {
 }
 
 func (t *QueryTable[R]) appendTable(w *queryWriter) {
-	fq := t.query.Finalize()
+	fq, err := t.query.Finalize()
+	if err != nil {
+		w.AddErr(err)
+	}
 	w.Printf("(%s)", fq.Query)
 	w.Args = append(w.Args, fq.Args...)
 	if t.alias != "" {
@@ -279,6 +287,7 @@ func (t *QueryTable[R]) appendTable(w *queryWriter) {
 type queryWriter struct {
 	sb   *strings.Builder
 	Args []any
+	errs []error
 }
 
 func newQueryWriter() *queryWriter {
@@ -292,6 +301,10 @@ func (w *queryWriter) String() string {
 func (w *queryWriter) Write(query string, args ...any) {
 	w.sb.WriteString(query)
 	w.Args = append(w.Args, args...)
+}
+
+func (w *queryWriter) AddErr(err error) {
+	w.errs = append(w.errs, err)
 }
 
 func (w *queryWriter) Printf(format string, fmtargs ...any) {
