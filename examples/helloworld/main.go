@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/ryym/geq/examples/helloworld/b"
 	"github.com/ryym/geq/examples/helloworld/reports"
-	"github.com/ryym/geq/tests/b"
 )
 
 func main() {
