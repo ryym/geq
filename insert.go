@@ -1,6 +1,8 @@
 package geq
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 )
 
@@ -95,4 +97,12 @@ func (q *InsertQuery) Finalize() (fq *FinalQuery, err error) {
 	}
 
 	return &FinalQuery{Query: w.String(), Args: w.Args}, nil
+}
+
+func (q *InsertQuery) Exec(ctx context.Context, db QueryExecutor) (result sql.Result, err error) {
+	fq, err := q.Finalize()
+	if err != nil {
+		return nil, err
+	}
+	return db.ExecContext(ctx, fq.Query, fq.Args...)
 }

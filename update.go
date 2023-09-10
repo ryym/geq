@@ -1,6 +1,10 @@
 package geq
 
-import "errors"
+import (
+	"context"
+	"database/sql"
+	"errors"
+)
 
 type UpdateQuery struct {
 	table    AnyTable
@@ -70,4 +74,12 @@ func (q *UpdateQuery) Finalize() (fq *FinalQuery, err error) {
 	}
 
 	return &FinalQuery{Query: w.String(), Args: w.Args}, nil
+}
+
+func (q *UpdateQuery) Exec(ctx context.Context, db QueryExecutor) (result sql.Result, err error) {
+	fq, err := q.Finalize()
+	if err != nil {
+		return nil, err
+	}
+	return db.ExecContext(ctx, fq.Query, fq.Args...)
 }
