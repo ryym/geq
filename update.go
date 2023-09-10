@@ -41,7 +41,10 @@ func (q *UpdateQuery) Where(exprs ...Expr) *UpdateQuery {
 
 func (q *UpdateQuery) Finalize() (fq *FinalQuery, err error) {
 	cfg := &QueryConfig{dialect: defaultDialect}
+	return q.FinalizeWith(cfg)
+}
 
+func (q *UpdateQuery) FinalizeWith(cfg *QueryConfig) (fq *FinalQuery, err error) {
 	w := newQueryWriter()
 	w.Write("UPDATE ")
 	w.Write(cfg.dialect.Ident(q.table.TableName()))

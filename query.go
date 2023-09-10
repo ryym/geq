@@ -19,9 +19,13 @@ type QueryConfig struct {
 	dialect Dialect
 }
 
+func NewQueryConfig(d Dialect) *QueryConfig {
+	return &QueryConfig{dialect: d}
+}
+
 type TableLike interface {
 	TableName() string
-	appendTable(w *queryWriter)
+	appendTable(w *queryWriter, cfg *QueryConfig)
 }
 
 type AnyTable interface {
@@ -62,8 +66,8 @@ func (t *TableBase) Selections() []Selection {
 	return t.selections
 }
 
-func (t *TableBase) appendTable(w *queryWriter) {
-	w.Write(t.tableName)
+func (t *TableBase) appendTable(w *queryWriter, cfg *QueryConfig) {
+	w.Write(cfg.dialect.Ident(t.tableName))
 	if t.alias != "" {
 		w.Write(" AS ")
 		w.Write(t.alias)
@@ -121,6 +125,7 @@ func (r *Relship[R, C]) In(recs []R) Expr {
 
 type AnyQuery interface {
 	Finalize() (*FinalQuery, error)
+	FinalizeWith(cfg *QueryConfig) (*FinalQuery, error)
 }
 
 type FinalQuery struct {
@@ -182,6 +187,10 @@ func (q *Query[R]) Limit(n uint) *Query[R] {
 
 func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 	cfg := &QueryConfig{dialect: defaultDialect}
+	return q.FinalizeWith(cfg)
+}
+
+func (q *Query[R]) FinalizeWith(cfg *QueryConfig) (fq *FinalQuery, err error) {
 	w := newQueryWriter()
 
 	w.Write("SELECT ")
@@ -198,7 +207,7 @@ func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
 
 	if q.from != nil {
 		w.Write(" FROM ")
-		q.from.appendTable(w)
+		q.from.appendTable(w, cfg)
 	}
 
 	if len(q.innerJoins) > 0 {
@@ -288,8 +297,8 @@ func (t *QueryTable[R]) Alias() string {
 	return t.alias
 }
 
-func (t *QueryTable[R]) appendTable(w *queryWriter) {
-	fq, err := t.query.Finalize()
+func (t *QueryTable[R]) appendTable(w *queryWriter, cfg *QueryConfig) {
+	fq, err := t.query.FinalizeWith(cfg)
 	if err != nil {
 		w.AddErr(err)
 	}

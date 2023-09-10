@@ -44,6 +44,10 @@ func (q *InsertQuery) ValueMaps(vms ...ValueMap) *InsertQuery {
 
 func (q *InsertQuery) Finalize() (fq *FinalQuery, err error) {
 	cfg := &QueryConfig{dialect: defaultDialect}
+	return q.FinalizeWith(cfg)
+}
+
+func (q *InsertQuery) FinalizeWith(cfg *QueryConfig) (fq *FinalQuery, err error) {
 	w := newQueryWriter()
 	w.Printf("INSERT INTO %s ", cfg.dialect.Ident(q.table.TableName()))
 
