@@ -63,7 +63,7 @@ func assertQuery(q geq.AnyQuery, wantSQL string, wantArgs ...any) error {
 		return err
 	}
 	want := &geq.FinalQuery{Query: wantSQL, Args: wantArgs}
-	return assertEqual(want, got)
+	return assertEqual(got, want)
 }
 
 func sjoin(ss ...string) string {
