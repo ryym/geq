@@ -10,3 +10,12 @@ services:
       - ./db/mysql:/docker-entrypoint-initdb.d
     environment:
       - MYSQL_ROOT_PASSWORD=root
+  pg:
+    image: postgres:15.4
+    ports:
+      - '3991:5432'
+    volumes:
+      - ./db/postgresql:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_USER=geq
+      - POSTGRES_PASSWORD=geq
