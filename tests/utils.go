@@ -58,7 +58,8 @@ func assertEqual[V any](got, want V) error {
 }
 
 func assertQuery(q geq.AnyQuery, wantSQL string, wantArgs ...any) error {
-	got, err := q.Finalize()
+	qcfg := geq.NewQueryConfig(&geq.DialectGeneric{})
+	got, err := q.FinalizeWith(qcfg)
 	if err != nil {
 		return err
 	}

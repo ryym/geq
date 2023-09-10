@@ -23,6 +23,7 @@ func TestPostgreSQL(t *testing.T) {
 	if err = db.Ping(); err != nil {
 		t.Fatalf("failed to ping to DB: %v", err)
 	}
+	geq.SetDefaultDialect(&geq.DialectPostgres{})
 	runIntegrationTest(t, db)
 }
 
@@ -35,6 +36,7 @@ func TestMySQL(t *testing.T) {
 	if err = db.Ping(); err != nil {
 		t.Fatalf("failed to ping to DB: %v", err)
 	}
+	geq.SetDefaultDialect(&geq.DialectMySQL{})
 	runIntegrationTest(t, db)
 }
 
