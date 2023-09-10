@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -33,13 +32,13 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := []mdl.User{
+				err = assertEqual(users, []mdl.User{
 					{ID: 1, Name: "user1"},
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
-				}
-				if diff := cmp.Diff(want, users); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -51,13 +50,13 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := map[string]mdl.User{
+				err = assertEqual(userMap, map[string]mdl.User{
 					"user1": {ID: 1, Name: "user1"},
 					"user2": {ID: 2, Name: "user2"},
 					"user3": {ID: 3, Name: "user3"},
-				}
-				if diff := cmp.Diff(want, userMap); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -70,7 +69,7 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := map[int64][]mdl.Post{
+				err = assertEqual(postsMap, map[int64][]mdl.Post{
 					1: {
 						{ID: 1, AuthorID: 1, Title: "user1-post1"},
 						{ID: 2, AuthorID: 1, Title: "user1-post2"},
@@ -83,9 +82,9 @@ func TestGeq(t *testing.T) {
 						{ID: 5, AuthorID: 3, Title: "user3-post2"},
 						{ID: 6, AuthorID: 3, Title: "user3-post3"},
 					},
-				}
-				if diff := cmp.Diff(want, postsMap); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -105,13 +104,13 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := []PostStat{
+				err = assertEqual(stats, []PostStat{
 					{AuthorID: 1, PostCount: 2, LastTitle: "user1-post2"},
 					{AuthorID: 2, PostCount: 1, LastTitle: "user2-post1"},
 					{AuthorID: 3, PostCount: 3, LastTitle: "user3-post3"},
-				}
-				if diff := cmp.Diff(want, stats); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -123,9 +122,9 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := []int64{1, 2, 3}
-				if diff := cmp.Diff(want, ids); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				err = assertEqual(ids, []int64{1, 2, 3})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -144,9 +143,9 @@ func TestGeq(t *testing.T) {
 					rows.Scan(&v1, &v2, &v3)
 					results = append(results, []int{v1, v2, v3})
 				}
-				want := [][]int{{-7, 1, 2}, {-7, 2, 3}, {-7, 3, 6}}
-				if diff := cmp.Diff(want, results); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				err = assertEqual(results, [][]int{{-7, 1, 2}, {-7, 2, 3}, {-7, 3, 6}})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -160,13 +159,13 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := []mdl.User{
+				err = assertEqual(users, []mdl.User{
 					{ID: 1, Name: "user1"},
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
-				}
-				if diff := cmp.Diff(want, users); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -180,13 +179,13 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := map[int64]mdl.User{
+				err = assertEqual(userMap, map[int64]mdl.User{
 					1: {ID: 1, Name: "user1"},
 					2: {ID: 2, Name: "user2"},
 					3: {ID: 3, Name: "user3"},
-				}
-				if diff := cmp.Diff(want, userMap); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -200,7 +199,7 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				want := map[int64][]mdl.Post{
+				err = assertEqual(postsMap, map[int64][]mdl.Post{
 					1: {
 						{ID: 1, AuthorID: 1, Title: "user1-post1"},
 						{ID: 2, AuthorID: 1, Title: "user1-post2"},
@@ -213,9 +212,9 @@ func TestGeq(t *testing.T) {
 						{ID: 5, AuthorID: 3, Title: "user3-post2"},
 						{ID: 6, AuthorID: 3, Title: "user3-post3"},
 					},
-				}
-				if diff := cmp.Diff(want, postsMap); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -233,24 +232,24 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				wantPostSlice := []mdl.Post{
+				err = assertEqual(posts, []mdl.Post{
 					{ID: 1, AuthorID: 1, Title: "user1-post1"},
 					{ID: 2, AuthorID: 1, Title: "user1-post2"},
 					{ID: 3, AuthorID: 2, Title: "user2-post1"},
 					{ID: 4, AuthorID: 3, Title: "user3-post1"},
 					{ID: 5, AuthorID: 3, Title: "user3-post2"},
 					{ID: 6, AuthorID: 3, Title: "user3-post3"},
+				})
+				if err != nil {
+					return err
 				}
-				if diff := cmp.Diff(wantPostSlice, posts); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
-				}
-				wantUserMap := map[int64]mdl.User{
+				err = assertEqual(userMap, map[int64]mdl.User{
 					1: {ID: 1, Name: "user1"},
 					2: {ID: 2, Name: "user2"},
 					3: {ID: 3, Name: "user3"},
-				}
-				if diff := cmp.Diff(wantUserMap, userMap); diff != "" {
-					return fmt.Errorf("wrong result:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -258,10 +257,10 @@ func TestGeq(t *testing.T) {
 		{
 			name: "select from table",
 			run: func(db *sql.Tx) (err error) {
-				got := b.SelectFrom(b.Users).Finalize()
-				want := newFinalQuery("SELECT users.id, users.name FROM users")
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				q := b.SelectFrom(b.Users)
+				err = assertQuery(q, "SELECT users.id, users.name FROM users")
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -274,13 +273,12 @@ func TestGeq(t *testing.T) {
 					{ID: 3, Name: "user3"},
 				}
 				q := b.SelectVia(users, b.Posts, b.Posts.Author)
-				got := q.Finalize()
-				want := newFinalQuery(
-					"SELECT posts.id, posts.author_id, posts.title FROM posts WHERE posts.author_id IN (?,?)",
-					int64(2), int64(3),
-				)
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				err = assertQuery(q, sjoin(
+					"SELECT posts.id, posts.author_id, posts.title FROM posts",
+					"WHERE posts.author_id IN (?,?)",
+				), int64(2), int64(3))
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -289,16 +287,13 @@ func TestGeq(t *testing.T) {
 			name: "select with join using relationship",
 			run: func(db *sql.Tx) (err error) {
 				q := b.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID)
-				got := q.Finalize()
-				want := newFinalQuery(
-					strings.Join([]string{
-						"SELECT posts.id, posts.author_id, posts.title FROM posts",
-						"INNER JOIN users ON posts.author_id = users.id",
-						"ORDER BY posts.author_id",
-					}, " "),
-				)
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				err = assertQuery(q, sjoin(
+					"SELECT posts.id, posts.author_id, posts.title FROM posts",
+					"INNER JOIN users ON posts.author_id = users.id",
+					"ORDER BY posts.author_id",
+				))
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -313,13 +308,11 @@ func TestGeq(t *testing.T) {
 					b.Posts.Title.Eq("title").As("bar"),
 					b.Null(),
 				)
-				got := q.Finalize()
-				want := newFinalQuery(
+				err = assertQuery(q, sjoin(
 					"SELECT users.id, users.name AS foo, posts.id = ?, posts.title = ? AS bar, NULL",
-					3, "title",
-				)
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				), 3, "title")
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -332,13 +325,9 @@ func TestGeq(t *testing.T) {
 					b.Max(b.Users.Name),
 					b.Func("MYFUNC", 1, b.Users.ID),
 				)
-				got := q.Finalize()
-				want := newFinalQuery(
-					"SELECT COUNT(users.id), MAX(users.name), MYFUNC(?, users.id)",
-					1,
-				)
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				err = assertQuery(q, "SELECT COUNT(users.id), MAX(users.name), MYFUNC(?, users.id)", 1)
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -347,10 +336,9 @@ func TestGeq(t *testing.T) {
 			name: "select with grouping",
 			run: func(db *sql.Tx) (err error) {
 				q := b.SelectFrom(b.Users, b.Users.Name, b.Max(b.Users.ID)).GroupBy(b.Users.Name)
-				got := q.Finalize()
-				want := newFinalQuery("SELECT users.name, MAX(users.id) FROM users GROUP BY users.name")
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				err = assertQuery(q, "SELECT users.name, MAX(users.id) FROM users GROUP BY users.name")
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -359,10 +347,9 @@ func TestGeq(t *testing.T) {
 			name: "select with limit",
 			run: func(db *sql.Tx) (err error) {
 				q := b.SelectFrom(b.Users, b.Users.ID).Limit(2)
-				got := q.Finalize()
-				want := newFinalQuery("SELECT users.id FROM users LIMIT 2")
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				err = assertQuery(q, "SELECT users.id FROM users LIMIT 2")
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -371,10 +358,11 @@ func TestGeq(t *testing.T) {
 			name: "select from sub query",
 			run: func(db *sql.Tx) (err error) {
 				q := b.Select(b.Raw("t.id"), b.Raw("t.title")).From(b.SelectFrom(b.Posts).As("t"))
-				got := q.Finalize()
-				want := newFinalQuery("SELECT t.id, t.title FROM (SELECT posts.id, posts.author_id, posts.title FROM posts) AS t")
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
+				err = assertQuery(q, sjoin(
+					"SELECT t.id, t.title FROM (SELECT posts.id, posts.author_id, posts.title FROM posts) AS t",
+				))
+				if err != nil {
+					return err
 				}
 				return nil
 			},

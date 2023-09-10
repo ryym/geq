@@ -2,7 +2,12 @@ package tests
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/ryym/geq"
 )
 
 type testCase struct {
@@ -42,4 +47,25 @@ func runTestCase(t *testing.T, db *sql.DB, idx int, c testCase) {
 		t.Logf("FAILED: case[%d] %s", idx, c.name)
 		t.Error(err)
 	}
+}
+
+func assertEqual[V any](got, want V) error {
+	diff := cmp.Diff(want, got)
+	if diff != "" {
+		return fmt.Errorf("values not equal:\n%s", diff)
+	}
+	return nil
+}
+
+func assertQuery(q geq.AnyQuery, wantSQL string, wantArgs ...any) error {
+	got, err := q.Finalize()
+	if err != nil {
+		return err
+	}
+	want := &geq.FinalQuery{Query: wantSQL, Args: wantArgs}
+	return assertEqual(want, got)
+}
+
+func sjoin(ss ...string) string {
+	return strings.Join(ss, " ")
 }
