@@ -107,6 +107,10 @@ func (r *Relship[R, C]) In(recs []R) Expr {
 	return r.colL.In(vals)
 }
 
+type AnyQuery interface {
+	Finalize() (*FinalQuery, error)
+}
+
 type FinalQuery struct {
 	Query string
 	Args  []any

@@ -385,19 +385,11 @@ func TestGeq(t *testing.T) {
 							b.Users.Name: b.Func("NOW"),
 						},
 					)
-
-				got, err := q.Finalize()
+				err = assertQuery(q, sjoin(
+					"INSERT INTO users (id, name) VALUES (?, ?), (?, NULL), (?, NOW())",
+				), int64(1), "name", 2, "invalid-id")
 				if err != nil {
 					return err
-				}
-				want := newFinalQuery(
-					"INSERT INTO users (id, name) VALUES (?, ?), (?, NULL), (?, NOW())",
-					int64(1), "name",
-					2,
-					"invalid-id",
-				)
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
 				}
 				return nil
 			},
@@ -416,11 +408,7 @@ func TestGeq(t *testing.T) {
 							b.Users.Name: "name200",
 						},
 					)
-				fq, err := q.Finalize()
-				if err != nil {
-					return err
-				}
-				ret, err := db.Exec(fq.Query, fq.Args...)
+				ret, err := q.Exec(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -441,19 +429,13 @@ func TestGeq(t *testing.T) {
 					b.Posts.AuthorID.Set(1),
 					b.Posts.Title.Set("title"),
 				).Where(b.Posts.ID.In([]int64{3, 4}))
-				got, err := q.Finalize()
+				err = assertQuery(q, sjoin(
+					"UPDATE posts SET author_id = ?, title = ? WHERE posts.id IN (?,?)",
+				), int64(1), "title", int64(3), int64(4))
 				if err != nil {
 					return err
 				}
-				want := newFinalQuery(
-					"UPDATE posts SET author_id = ?, title = ? WHERE posts.id IN (?,?)",
-					int64(1), "title", int64(3), int64(4),
-				)
-				if diff := cmp.Diff(want, got); diff != "" {
-					return fmt.Errorf("wrong final query:%s", diff)
-				}
-
-				_, err = db.Exec(got.Query, got.Args...)
+				_, err = q.Exec(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -464,19 +446,15 @@ func TestGeq(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				wantPosts := []mdl.Post{
+				err = assertEqual(posts, []mdl.Post{
 					{ID: 3, AuthorID: 1, Title: "title"},
 					{ID: 4, AuthorID: 1, Title: "title"},
-				}
-				if diff := cmp.Diff(wantPosts, posts); diff != "" {
-					return fmt.Errorf("wrong affected:%s", diff)
+				})
+				if err != nil {
+					return err
 				}
 				return nil
 			},
 		},
 	})
-}
-
-func newFinalQuery(query string, args ...any) *geq.FinalQuery {
-	return &geq.FinalQuery{Query: query, Args: args}
 }
