@@ -8,12 +8,25 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/go-cmp/cmp"
+	_ "github.com/lib/pq"
 	"github.com/ryym/geq"
 	"github.com/ryym/geq/tests/b"
 	"github.com/ryym/geq/tests/mdl"
 )
 
-func TestGeq(t *testing.T) {
+func TestPostgreSQL(t *testing.T) {
+	db, err := sql.Open("postgres", "port=3991 user=geq password=geq sslmode=disable")
+	if err != nil {
+		t.Fatalf("failed to open DB: %v", err)
+	}
+	defer db.Close()
+	if err = db.Ping(); err != nil {
+		t.Fatalf("failed to ping to DB: %v", err)
+	}
+	runIntegrationTest(t, db)
+}
+
+func TestMySQL(t *testing.T) {
 	db, err := sql.Open("mysql", "root:root@tcp(:3990)/geq")
 	if err != nil {
 		t.Fatalf("failed to open DB: %v", err)
@@ -22,7 +35,10 @@ func TestGeq(t *testing.T) {
 	if err = db.Ping(); err != nil {
 		t.Fatalf("failed to ping to DB: %v", err)
 	}
+	runIntegrationTest(t, db)
+}
 
+func runIntegrationTest(t *testing.T, db *sql.DB) {
 	ctx := context.Background()
 	runTestCases(t, db, []testCase{
 		{
@@ -93,11 +109,10 @@ func TestGeq(t *testing.T) {
 			name: "load as non-table row slice",
 			run: func(db *sql.Tx) (err error) {
 				stats, err := b.SelectAs(&PostStats{
-					AuthorID:  b.Users.ID,
+					AuthorID:  b.Posts.AuthorID,
 					PostCount: b.Count(b.Posts.ID),
 					LastTitle: b.Max(b.Posts.Title),
 				}).From(b.Posts).
-					Joins(b.Posts.Author).
 					GroupBy(b.Posts.AuthorID).
 					OrderBy(b.Posts.AuthorID).
 					Load(ctx, db)
@@ -132,7 +147,10 @@ func TestGeq(t *testing.T) {
 		{
 			name: "load as sql.Rows",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(b.Raw("2-9"), b.Posts.AuthorID, b.Max(b.Posts.ID)).From(b.Posts).GroupBy(b.Posts.AuthorID)
+				q := b.Select(b.Raw("2-9"), b.Posts.AuthorID, b.Max(b.Posts.ID).As("maxpostid")).
+					From(b.Posts).
+					GroupBy(b.Posts.AuthorID).
+					OrderBy(b.Posts.AuthorID, b.Raw("maxpostid"))
 				rows, err := q.LoadRows(ctx, db)
 				if err != nil {
 					return err
