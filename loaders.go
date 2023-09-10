@@ -2,21 +2,12 @@ package geq
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 )
 
 type MultiScanLoader[Q any] struct {
 	query    *Query[Q]
 	scanners []RowsScanner
-}
-
-type QueryRunner interface {
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-}
-
-type QueryExecutor interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
 func (ms *MultiScanLoader[Q]) Load(ctx context.Context, db QueryRunner) (err error) {

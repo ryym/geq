@@ -7,6 +7,14 @@ import (
 	"strings"
 )
 
+type QueryRunner interface {
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+}
+
+type QueryExecutor interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
+
 type TableLike interface {
 	TableName() string
 	appendTable(w *queryWriter)
