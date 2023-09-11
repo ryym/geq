@@ -346,6 +346,36 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "select basic operations",
+			run: func(db *sql.Tx) (err error) {
+				q := b.Select(
+					b.Users.ID.Eq(3),
+					b.Users.ID.Neq(3),
+					b.Users.ID.Gt(4),
+					b.Users.ID.Gte(4),
+					b.Users.ID.Lt(4),
+					b.Users.ID.Lte(4),
+					b.Users.ID.Add(5),
+					b.Users.ID.Sbt(5),
+					b.Users.ID.Mlt(5),
+					b.Users.ID.Dvd(5),
+					b.Users.Name.Concat("_"),
+					b.Users.ID.IsNull(),
+					b.Users.ID.IsNotNull(),
+				)
+				err = assertQuery(q, sjoin(
+					"SELECT users.id = ?, users.id <> ?,",
+					"users.id > ?, users.id >= ?, users.id < ?, users.id <= ?,",
+					"users.id + ?, users.id - ?, users.id * ?, users.id / ?,",
+					"users.name || ?, users.id IS NULL, users.id IS NOT NULL",
+				), 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, "_")
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select function calls",
 			run: func(db *sql.Tx) (err error) {
 				q := b.Select(

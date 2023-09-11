@@ -30,3 +30,97 @@ func (o *ops) Eq(v any) Expr {
 		op:    "=",
 	})
 }
+
+func (o *ops) Neq(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "<>",
+	})
+}
+
+func (o *ops) Gt(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    ">",
+	})
+}
+
+func (o *ops) Gte(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    ">=",
+	})
+}
+
+func (o *ops) Lt(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "<",
+	})
+}
+
+func (o *ops) Lte(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "<=",
+	})
+}
+
+func (o *ops) Add(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "+",
+	})
+}
+
+func (o *ops) Sbt(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "-",
+	})
+}
+
+func (o *ops) Mlt(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "*",
+	})
+}
+
+func (o *ops) Dvd(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "/",
+	})
+}
+
+func (o *ops) Concat(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: toExpr(v),
+		op:    "||",
+	})
+}
+
+func (o *ops) IsNull() Expr {
+	return implOps(&suffixExpr{
+		val: o.expr,
+		op:  "IS NULL",
+	})
+}
+
+func (o *ops) IsNotNull() Expr {
+	return implOps(&suffixExpr{
+		val: o.expr,
+		op:  "IS NOT NULL",
+	})
+}

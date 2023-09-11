@@ -3,7 +3,21 @@ package geq
 type Expr interface {
 	Selection
 	As(name string) Aliased
+
 	Eq(v any) Expr
+	Neq(v any) Expr
+	Gt(v any) Expr
+	Gte(v any) Expr
+	Lt(v any) Expr
+	Lte(v any) Expr
+	Add(v any) Expr
+	Sbt(v any) Expr
+	Mlt(v any) Expr
+	Dvd(v any) Expr
+	Concat(v any) Expr
+	IsNull() Expr
+	IsNotNull() Expr
+
 	appendExpr(w *queryWriter, c *QueryConfig)
 }
 
@@ -97,6 +111,18 @@ func (e *infixExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	e.left.appendExpr(w, cfg)
 	w.Printf(" %s ", e.op)
 	e.right.appendExpr(w, cfg)
+}
+
+type suffixExpr struct {
+	ops
+	op  string
+	val Expr
+}
+
+func (e *suffixExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	e.val.appendExpr(w, cfg)
+	w.Write(" ")
+	w.Write(e.op)
 }
 
 type inExpr struct {
