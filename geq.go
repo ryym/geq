@@ -82,5 +82,5 @@ func Builder_Func(name string, args ...any) Expr {
 }
 
 func Builder_Raw(expr string, args ...any) Expr {
-	return implOps(&rawExpr{expr: expr, args: args})
+	return newRawExpr(expr, args...)
 }

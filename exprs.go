@@ -16,6 +16,9 @@ type Expr interface {
 	Sbt(v any) Expr
 	Mlt(v any) Expr
 	Dvd(v any) Expr
+	LikePrefix(v any) Expr
+	LikeSuffix(v any) Expr
+	LikePartial(v any) Expr
 	IsNull() Expr
 	IsNotNull() Expr
 
@@ -199,6 +202,10 @@ type rawExpr struct {
 	ops
 	expr string
 	args []any
+}
+
+func newRawExpr(expr string, args ...any) *rawExpr {
+	return implOps(&rawExpr{expr: expr, args: args})
 }
 
 func (e *rawExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {

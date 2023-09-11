@@ -116,3 +116,28 @@ func (o *ops) IsNotNull() Expr {
 		op:  "IS NOT NULL",
 	})
 }
+
+func (o *ops) LikePrefix(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: newConcatExpr(v, newRawExpr("'%'")),
+		op:    "LIKE",
+	})
+}
+
+func (o *ops) LikeSuffix(v any) Expr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: newConcatExpr(newRawExpr("'%'"), v),
+		op:    "LIKE",
+	})
+}
+
+func (o *ops) LikePartial(v any) Expr {
+	pc := newRawExpr("'%'")
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: newConcatExpr(pc, v, pc),
+		op:    "LIKE",
+	})
+}

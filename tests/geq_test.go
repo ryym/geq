@@ -375,6 +375,43 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "select like expressions",
+			run: func(db *sql.Tx) (err error) {
+				q := b.Select(
+					b.Users.Name.LikePrefix("user"),
+					b.Users.Name.LikeSuffix(b.Users.ID),
+					b.Users.Name.LikePartial("s"),
+				)
+				err = assertQuery(q, sjoin(
+					"SELECT users.name LIKE ? || '%', users.name LIKE '%' || users.id,",
+					"users.name LIKE '%' || ? || '%'",
+				), "user", "s")
+				if err != nil {
+					return err
+				}
+
+				users, err := b.SelectFrom(b.Users).Where(b.Users.Name.LikePrefix("user")).Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				err = assertEqual(len(users), 3)
+				if err != nil {
+					return err
+				}
+
+				users, err = b.SelectFrom(b.Users).Where(b.Users.Name.LikeSuffix(b.Users.ID)).Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				err = assertEqual(len(users), 3)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+		},
+		{
 			name: "select function calls",
 			run: func(db *sql.Tx) (err error) {
 				q := b.Select(
