@@ -69,6 +69,10 @@ func Builder_Null() Expr {
 	return implOps(&nullExpr{})
 }
 
+func Builder_Concat(vals ...any) Expr {
+	return newConcatExpr(vals...)
+}
+
 func Builder_Func(name string, args ...any) Expr {
 	exprs := make([]Expr, 0, len(args))
 	for _, arg := range args {

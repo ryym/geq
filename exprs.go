@@ -1,5 +1,7 @@
 package geq
 
+import "fmt"
+
 type Expr interface {
 	Selection
 	As(name string) Aliased
@@ -123,6 +125,37 @@ func (e *suffixExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	e.val.appendExpr(w, cfg)
 	w.Write(" ")
 	w.Write(e.op)
+}
+
+type concatExpr struct {
+	ops
+	vals []Expr
+}
+
+func newConcatExpr(vals ...any) *concatExpr {
+	exprs := make([]Expr, 0, len(vals))
+	for _, v := range vals {
+		exprs = append(exprs, toExpr(v))
+	}
+	return implOps(&concatExpr{vals: exprs})
+}
+
+func (e *concatExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	stype := cfg.dialect.StrConcatType()
+	switch stype {
+	case StrConcatStandard:
+		for i, v := range e.vals {
+			if i > 0 {
+				w.Write(" || ")
+			}
+			v.appendExpr(w, cfg)
+		}
+	case StrConcatFunc:
+		fe := &funcExpr{name: "CONCAT", args: e.vals}
+		fe.appendExpr(w, cfg)
+	default:
+		panic(fmt.Sprintf("unknown string concat type: %v", stype))
+	}
 }
 
 type inExpr struct {

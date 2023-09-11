@@ -371,6 +371,10 @@ func Null() geq.Expr {
 	return geq.Builder_Null()
 }
 
+func Concat(vals ...any) geq.Expr {
+	return geq.Builder_Concat(vals...)
+}
+
 func Func(name string, args ...any) geq.Expr {
 	return geq.Builder_Func(name, args...)
 }
