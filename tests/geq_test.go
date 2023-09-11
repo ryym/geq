@@ -359,7 +359,6 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					b.Users.ID.Sbt(5),
 					b.Users.ID.Mlt(5),
 					b.Users.ID.Dvd(5),
-					b.Users.Name.Concat("_"),
 					b.Users.ID.IsNull(),
 					b.Users.ID.IsNotNull(),
 				)
@@ -367,8 +366,8 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					"SELECT users.id = ?, users.id <> ?,",
 					"users.id > ?, users.id >= ?, users.id < ?, users.id <= ?,",
 					"users.id + ?, users.id - ?, users.id * ?, users.id / ?,",
-					"users.name || ?, users.id IS NULL, users.id IS NOT NULL",
-				), 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, "_")
+					"users.id IS NULL, users.id IS NOT NULL",
+				), 3, 3, 4, 4, 4, 4, 5, 5, 5, 5)
 				if err != nil {
 					return err
 				}

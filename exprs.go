@@ -16,7 +16,6 @@ type Expr interface {
 	Sbt(v any) Expr
 	Mlt(v any) Expr
 	Dvd(v any) Expr
-	Concat(v any) Expr
 	IsNull() Expr
 	IsNotNull() Expr
 

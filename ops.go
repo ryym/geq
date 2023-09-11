@@ -103,14 +103,6 @@ func (o *ops) Dvd(v any) Expr {
 	})
 }
 
-func (o *ops) Concat(v any) Expr {
-	return implOps(&infixExpr{
-		left:  o.expr,
-		right: toExpr(v),
-		op:    "||",
-	})
-}
-
 func (o *ops) IsNull() Expr {
 	return implOps(&suffixExpr{
 		val: o.expr,
