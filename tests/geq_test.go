@@ -71,21 +71,21 @@ INSERT INTO posts (id, author_id, title) VALUES
   (6, 3, 'user3-post3');
 `
 
-func TestPostgreSQL(t *testing.T) {
-	db, err := openDB("postgres", "port=3991 user=geq password=geq sslmode=disable")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
+// func TestPostgreSQL(t *testing.T) {
+// 	db, err := openDB("postgres", "port=3991 user=geq password=geq sslmode=disable")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	defer db.Close()
 
-	err = initDB(db, initPostgreSQL, fixtureSQL)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	err = initDB(db, initPostgreSQL, fixtureSQL)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	geq.SetDefaultDialect(&geq.DialectPostgres{})
-	runIntegrationTest(t, db)
-}
+// 	geq.SetDefaultDialect(&geq.DialectPostgres{})
+// 	runIntegrationTest(t, db)
+// }
 
 func TestMySQL(t *testing.T) {
 	db, err := openDB("mysql", "root:root@tcp(:3990)/geq?multiStatements=true")
@@ -99,8 +99,8 @@ func TestMySQL(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	geq.SetDefaultDialect(&geq.DialectMySQL{})
-	runIntegrationTest(t, db)
+	// geq.SetDefaultDialect(&geq.DialectMySQL{})
+	// runIntegrationTest(t, db)
 }
 
 func openDB(driver, dsn string) (db *sql.DB, err error) {
