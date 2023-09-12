@@ -462,6 +462,29 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "use queries as expressions",
+			run: func(db *sql.Tx) (err error) {
+				one, two := b.Raw("1"), b.Raw("2")
+				q := b.Select(b.Select(one), b.Select(two).As("two")).Where(two.Gte(b.Select(one).Add(one)))
+				err = assertQuery(q, "SELECT (SELECT 1), (SELECT 2) AS two WHERE 2 >= (SELECT 1) + 1")
+				if err != nil {
+					return err
+				}
+				rows, err := q.LoadRows(ctx, db)
+				if err != nil {
+					return err
+				}
+				var ret [2]int
+				rows.Next()
+				rows.Scan(&ret[0], &ret[1])
+				err = assertEqual(ret, [2]int{1, 2})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "build insert query by values and value maps",
 			run: func(db *sql.Tx) (err error) {
 				q := b.InsertInto(b.Users).

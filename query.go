@@ -134,6 +134,7 @@ type FinalQuery struct {
 }
 
 type Query[R any] struct {
+	ops
 	mapper     RowMapper[R]
 	selections []Selection
 	from       TableLike
@@ -146,7 +147,7 @@ type Query[R any] struct {
 }
 
 func newQuery[R any](mapper RowMapper[R]) *Query[R] {
-	q := &Query[R]{mapper: mapper}
+	q := implOps(&Query[R]{mapper: mapper})
 	q.selections = mapper.Selections()
 	return q
 }
@@ -284,6 +285,16 @@ func (q *Query[R]) WillScan(scanners ...RowsScanner) *MultiScanLoader[R] {
 	return &MultiScanLoader[R]{query: q, scanners: scanners}
 }
 
+func (q *Query[R]) appendExpr(w *queryWriter, c *QueryConfig) {
+	fq, err := q.FinalizeWith(c)
+	if err != nil {
+		w.AddErr(err)
+	}
+	w.Write("(")
+	w.Write(fq.Query, fq.Args...)
+	w.Write(")")
+}
+
 type QueryTable[R any] struct {
 	query *Query[R]
 	alias string
@@ -293,17 +304,16 @@ func (t *QueryTable[R]) TableName() string {
 	return t.alias
 }
 
+func (t *QueryTable[R]) Expr() Expr {
+	return t.query
+}
+
 func (t *QueryTable[R]) Alias() string {
 	return t.alias
 }
 
 func (t *QueryTable[R]) appendTable(w *queryWriter, cfg *QueryConfig) {
-	fq, err := t.query.FinalizeWith(cfg)
-	if err != nil {
-		w.AddErr(err)
-	}
-	w.Printf("(%s)", fq.Query)
-	w.Args = append(w.Args, fq.Args...)
+	t.query.appendExpr(w, cfg)
 	if t.alias != "" {
 		w.Write(" AS ")
 		w.Write(t.alias)
