@@ -29,3 +29,15 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
+      postgres:
+        image: postgres:15.4
+        ports:
+          - 3991:5432
+        env:
+          POSTGRES_USER: geq
+          POSTGRES_PASSWORD: geq
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
