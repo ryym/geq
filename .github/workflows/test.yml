@@ -1,0 +1,43 @@
+name: Test
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.21.x"
+
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -v ./...
+
+    services:
+      mysql:
+        image: mysql:8.1
+        ports:
+          - 3990:3306
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: geq
+        options: >-
+          --health-cmd "mysqladmin ping -uroot -proot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      postgres:
+        image: postgres:15.4
+        ports:
+          - 3991:5432
+        env:
+          POSTGRES_USER: geq
+          POSTGRES_PASSWORD: geq
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
