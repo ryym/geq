@@ -3,7 +3,7 @@ name: Test
 on: [push]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,7 +23,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: geq
         options: >-
-          --health-cmd 'mysqladmin ping -uroot -proot'
+          --health-cmd "mysqladmin ping -uroot -proot"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
