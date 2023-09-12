@@ -19,6 +19,8 @@ jobs:
     services:
       mysql:
         image: mysql:8.1
+        ports:
+          - 3990:3306
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: geq
