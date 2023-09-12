@@ -23,7 +23,7 @@ func (o *ops) As(alias string) Aliased {
 	return &aliased{expr: o.expr, alias: alias}
 }
 
-func (o *ops) Eq(v any) Expr {
+func (o *ops) Eq(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -31,7 +31,7 @@ func (o *ops) Eq(v any) Expr {
 	})
 }
 
-func (o *ops) Neq(v any) Expr {
+func (o *ops) Neq(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -39,7 +39,7 @@ func (o *ops) Neq(v any) Expr {
 	})
 }
 
-func (o *ops) Gt(v any) Expr {
+func (o *ops) Gt(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -47,7 +47,7 @@ func (o *ops) Gt(v any) Expr {
 	})
 }
 
-func (o *ops) Gte(v any) Expr {
+func (o *ops) Gte(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -55,7 +55,7 @@ func (o *ops) Gte(v any) Expr {
 	})
 }
 
-func (o *ops) Lt(v any) Expr {
+func (o *ops) Lt(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -63,7 +63,7 @@ func (o *ops) Lt(v any) Expr {
 	})
 }
 
-func (o *ops) Lte(v any) Expr {
+func (o *ops) Lte(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -71,7 +71,7 @@ func (o *ops) Lte(v any) Expr {
 	})
 }
 
-func (o *ops) Add(v any) Expr {
+func (o *ops) Add(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -79,7 +79,7 @@ func (o *ops) Add(v any) Expr {
 	})
 }
 
-func (o *ops) Sbt(v any) Expr {
+func (o *ops) Sbt(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -87,7 +87,7 @@ func (o *ops) Sbt(v any) Expr {
 	})
 }
 
-func (o *ops) Mlt(v any) Expr {
+func (o *ops) Mlt(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -95,7 +95,7 @@ func (o *ops) Mlt(v any) Expr {
 	})
 }
 
-func (o *ops) Dvd(v any) Expr {
+func (o *ops) Dvd(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: toExpr(v),
@@ -103,21 +103,21 @@ func (o *ops) Dvd(v any) Expr {
 	})
 }
 
-func (o *ops) IsNull() Expr {
+func (o *ops) IsNull() AnonExpr {
 	return implOps(&suffixExpr{
 		val: o.expr,
 		op:  "IS NULL",
 	})
 }
 
-func (o *ops) IsNotNull() Expr {
+func (o *ops) IsNotNull() AnonExpr {
 	return implOps(&suffixExpr{
 		val: o.expr,
 		op:  "IS NOT NULL",
 	})
 }
 
-func (o *ops) LikePrefix(v any) Expr {
+func (o *ops) LikePrefix(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: newConcatExpr(v, newRawExpr("'%'")),
@@ -125,7 +125,7 @@ func (o *ops) LikePrefix(v any) Expr {
 	})
 }
 
-func (o *ops) LikeSuffix(v any) Expr {
+func (o *ops) LikeSuffix(v any) AnonExpr {
 	return implOps(&infixExpr{
 		left:  o.expr,
 		right: newConcatExpr(newRawExpr("'%'"), v),
@@ -133,7 +133,7 @@ func (o *ops) LikeSuffix(v any) Expr {
 	})
 }
 
-func (o *ops) LikePartial(v any) Expr {
+func (o *ops) LikePartial(v any) AnonExpr {
 	pc := newRawExpr("'%'")
 	return implOps(&infixExpr{
 		left:  o.expr,

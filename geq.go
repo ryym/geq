@@ -65,15 +65,15 @@ func Builder_Update(table AnyTable) *UpdateQuery {
 	return newUpdateQuery(table)
 }
 
-func Builder_Null() Expr {
+func Builder_Null() AnonExpr {
 	return implOps(&nullExpr{})
 }
 
-func Builder_Concat(vals ...any) Expr {
+func Builder_Concat(vals ...any) AnonExpr {
 	return newConcatExpr(vals...)
 }
 
-func Builder_Func(name string, args ...any) Expr {
+func Builder_Func(name string, args ...any) AnonExpr {
 	exprs := make([]Expr, 0, len(args))
 	for _, arg := range args {
 		exprs = append(exprs, toExpr(arg))
@@ -81,6 +81,6 @@ func Builder_Func(name string, args ...any) Expr {
 	return implOps(&funcExpr{name: name, args: exprs})
 }
 
-func Builder_Raw(expr string, args ...any) Expr {
+func Builder_Raw(expr string, args ...any) AnonExpr {
 	return newRawExpr(expr, args...)
 }

@@ -4,25 +4,29 @@ import "fmt"
 
 type Expr interface {
 	Selection
-	As(name string) Aliased
 
-	Eq(v any) Expr
-	Neq(v any) Expr
-	Gt(v any) Expr
-	Gte(v any) Expr
-	Lt(v any) Expr
-	Lte(v any) Expr
-	Add(v any) Expr
-	Sbt(v any) Expr
-	Mlt(v any) Expr
-	Dvd(v any) Expr
-	LikePrefix(v any) Expr
-	LikeSuffix(v any) Expr
-	LikePartial(v any) Expr
-	IsNull() Expr
-	IsNotNull() Expr
+	Eq(v any) AnonExpr
+	Neq(v any) AnonExpr
+	Gt(v any) AnonExpr
+	Gte(v any) AnonExpr
+	Lt(v any) AnonExpr
+	Lte(v any) AnonExpr
+	Add(v any) AnonExpr
+	Sbt(v any) AnonExpr
+	Mlt(v any) AnonExpr
+	Dvd(v any) AnonExpr
+	LikePrefix(v any) AnonExpr
+	LikeSuffix(v any) AnonExpr
+	LikePartial(v any) AnonExpr
+	IsNull() AnonExpr
+	IsNotNull() AnonExpr
 
 	appendExpr(w *queryWriter, c *QueryConfig)
+}
+
+type AnonExpr interface {
+	Expr
+	As(name string) Aliased
 }
 
 type Aliased interface {

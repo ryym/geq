@@ -367,27 +367,27 @@ func Update(table geq.AnyTable) *geq.UpdateQuery {
 	return geq.Builder_Update(table)
 }
 
-func Null() geq.Expr {
+func Null() geq.AnonExpr {
 	return geq.Builder_Null()
 }
 
-func Concat(vals ...any) geq.Expr {
+func Concat(vals ...any) geq.AnonExpr {
 	return geq.Builder_Concat(vals...)
 }
 
-func Func(name string, args ...any) geq.Expr {
+func Func(name string, args ...any) geq.AnonExpr {
 	return geq.Builder_Func(name, args...)
 }
 
-func Count(expr geq.Expr) geq.Expr {
+func Count(expr geq.Expr) geq.AnonExpr {
 	return Func("COUNT", expr)
 }
 
-func Max(expr geq.Expr) geq.Expr {
+func Max(expr geq.Expr) geq.AnonExpr {
 	return Func("MAX", expr)
 }
 
-func Raw(expr string, args ...any) geq.Expr {
+func Raw(expr string, args ...any) geq.AnonExpr {
 	return geq.Builder_Raw(expr, args...)
 }
 `
