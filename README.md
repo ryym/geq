@@ -1,6 +1,11 @@
+(WIP)
+
 # Geq
 
 Yet another SQL query builder for Go, with moderate type safety powered by generics and code generation.
+
+- SQL friendly (Not ORM)
+- Performative (No runtime reflections)
 
 ```go
 package main
