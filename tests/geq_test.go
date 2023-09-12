@@ -14,6 +14,63 @@ import (
 	"github.com/ryym/geq/tests/mdl"
 )
 
+const initMySQL = `
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+  id int unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  name varchar(128) NOT NULL
+);
+
+DROP TABLE IF EXISTS posts;
+CREATE TABLE posts (
+  id int unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  author_id int unsigned NOT NULL,
+  title varchar(128) NOT NULL
+);
+
+DROP TABLE IF EXISTS transactions;
+CREATE TABLE transactions (
+  id int unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  user_id int unsigned NOT NULL,
+  amount int NOT NULL,
+  description varchar(256) NOT NULL
+);
+`
+
+const initPostgreSQL = `
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+  id serial NOT NULL,
+  name varchar(128) NOT NULL
+);
+
+DROP TABLE IF EXISTS posts;
+CREATE TABLE posts (
+  id serial NOT NULL,
+  author_id int NOT NULL,
+  title varchar(128) NOT NULL
+);
+
+DROP TABLE IF EXISTS transactions;
+CREATE TABLE transactions (
+  id serial NOT NULL,
+  user_id int NOT NULL,
+  amount int NOT NULL,
+  description varchar(256) NOT NULL
+);
+`
+
+const fixtureSQL = `
+INSERT INTO users VALUES (1, 'user1'), (2, 'user2'), (3, 'user3');
+INSERT INTO posts (id, author_id, title) VALUES
+  (1, 1, 'user1-post1'),
+  (2, 1, 'user1-post2'),
+  (3, 2, 'user2-post1'),
+  (4, 3, 'user3-post1'),
+  (5, 3, 'user3-post2'),
+  (6, 3, 'user3-post3');
+`
+
 func TestPostgreSQL(t *testing.T) {
 	db, err := openDB("postgres", "port=3991 user=geq password=geq sslmode=disable")
 	if err != nil {
@@ -21,16 +78,26 @@ func TestPostgreSQL(t *testing.T) {
 	}
 	defer db.Close()
 
+	err = initDB(db, initPostgreSQL, fixtureSQL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	geq.SetDefaultDialect(&geq.DialectPostgres{})
 	runIntegrationTest(t, db)
 }
 
 func TestMySQL(t *testing.T) {
-	db, err := openDB("mysql", "root:root@tcp(:3990)/geq")
+	db, err := openDB("mysql", "root:root@tcp(:3990)/geq?multiStatements=true")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer db.Close()
+
+	err = initDB(db, initMySQL, fixtureSQL)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	geq.SetDefaultDialect(&geq.DialectMySQL{})
 	runIntegrationTest(t, db)
@@ -46,6 +113,18 @@ func openDB(driver, dsn string) (db *sql.DB, err error) {
 		return nil, fmt.Errorf("failed to ping to DB: %w", err)
 	}
 	return db, nil
+}
+
+func initDB(db *sql.DB, initSQL, fixtureSQL string) (err error) {
+	_, err = db.Exec(initSQL)
+	if err != nil {
+		return fmt.Errorf("failed to run initSQL: %w", err)
+	}
+	_, err = db.Exec(fixtureSQL)
+	if err != nil {
+		return fmt.Errorf("failed to run fixtureSQL: %w", err)
+	}
+	return nil
 }
 
 func runIntegrationTest(t *testing.T, db *sql.DB) {
