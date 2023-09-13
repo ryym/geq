@@ -18,6 +18,7 @@ type Expr interface {
 	LikePrefix(v any) AnonExpr
 	LikeSuffix(v any) AnonExpr
 	LikePartial(v any) AnonExpr
+	InAny(vals ...any) AnonExpr
 	IsNull() AnonExpr
 	IsNotNull() AnonExpr
 
@@ -173,13 +174,11 @@ type inExpr struct {
 func (e *inExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	e.operand.appendExpr(w, cfg)
 	w.Write(" IN (")
-	if len(e.values) > 0 {
-		for i, v := range e.values {
-			if i > 0 {
-				w.Write(", ")
-			}
-			toExpr(v).appendExpr(w, cfg)
+	for i, v := range e.values {
+		if i > 0 {
+			w.Write(", ")
 		}
+		toExpr(v).appendExpr(w, cfg)
 	}
 	w.Write(")")
 }

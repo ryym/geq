@@ -454,7 +454,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
-			name: "select like expressions",
+			name: "select LIKE expressions",
 			run: func(db *sql.Tx) (err error) {
 				q := b.Select(
 					b.Users.Name.LikePrefix("user"),
@@ -487,6 +487,23 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					return err
 				}
 
+				return nil
+			},
+		},
+		{
+			name: "select IN expressions",
+			run: func(db *sql.Tx) (err error) {
+				q := b.Select(
+					b.Users.ID.InAny(1, "2", "str"),
+					b.Users.Name.InAny(b.Select(b.Raw("'user'"))),
+				)
+				err = assertQuery(q,
+					"SELECT users.id IN (?, ?, ?), users.name IN ((SELECT 'user'))",
+					1, "2", "str",
+				)
+				if err != nil {
+					return err
+				}
 				return nil
 			},
 		},

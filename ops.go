@@ -141,3 +141,10 @@ func (o *ops) LikePartial(v any) AnonExpr {
 		op:    "LIKE",
 	})
 }
+
+func (o *ops) InAny(vals ...any) AnonExpr {
+	return implOps(&inExpr{
+		operand: o.expr,
+		values:  vals,
+	})
+}
