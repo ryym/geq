@@ -145,20 +145,11 @@ func parseTables(pkg *packages.Package, imports map[string]struct{}) (tables []t
 		tableFields := make([]tableFieldDef, 0, nTableFields)
 		for j := 0; j < nTableFields; j++ {
 			f := fieldStruct.Field(j)
-			var fTypeName string
-			switch ft := f.Type().(type) {
-			case *types.Basic:
-				fTypeName = ft.Name()
-			// case *types.Named:
-			default:
-				return nil, fmt.Errorf("type of field of table row %s.%s is invalid", rowName, f.Name())
+			tfd, err := parseTableField(f, imports)
+			if err != nil {
+				return nil, fmt.Errorf("table row %s invalid: %w", rowName, err)
 			}
-
-			tableFields = append(tableFields, tableFieldDef{
-				Name:   f.Name(),
-				DbName: toSnake(f.Name()),
-				Type:   fTypeName,
-			})
+			tableFields = append(tableFields, *tfd)
 		}
 
 		td := tableDef{
@@ -171,6 +162,25 @@ func parseTables(pkg *packages.Package, imports map[string]struct{}) (tables []t
 	}
 
 	return tables, nil
+}
+
+func parseTableField(f *types.Var, imports map[string]struct{}) (tfd *tableFieldDef, err error) {
+	var typeName string
+	switch ft := f.Type().(type) {
+	case *types.Basic:
+		typeName = ft.Name()
+	case *types.Named:
+		ftPkg := ft.Obj().Pkg()
+		imports[ftPkg.Path()] = struct{}{}
+		typeName = fmt.Sprintf("%s.%s", ftPkg.Name(), ft.Obj().Name())
+	default:
+		return nil, fmt.Errorf("type of field %s invalid", f.Name())
+	}
+	return &tableFieldDef{
+		Name:   f.Name(),
+		DbName: toSnake(f.Name()),
+		Type:   typeName,
+	}, nil
 }
 
 func parseRelationships(pkg *packages.Package, tables []tableDef) (relsMap map[string][]*relshipDef, err error) {
