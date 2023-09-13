@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/go-cmp/cmp"
@@ -33,7 +34,8 @@ CREATE TABLE transactions (
   id int unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT,
   user_id int unsigned NOT NULL,
   amount int NOT NULL,
-  description varchar(256) NOT NULL
+  description varchar(256) NOT NULL DEFAULT '',
+  created_at datetime NOT NULL DEFAULT NOW()
 );
 `
 
@@ -56,7 +58,8 @@ CREATE TABLE transactions (
   id serial NOT NULL,
   user_id int NOT NULL,
   amount int NOT NULL,
-  description varchar(256) NOT NULL
+  description varchar(256) NOT NULL DEFAULT '',
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 `
 
@@ -88,7 +91,7 @@ func TestPostgreSQL(t *testing.T) {
 }
 
 func TestMySQL(t *testing.T) {
-	db, err := openDB("mysql", "root:root@tcp(:3990)/geq?multiStatements=true")
+	db, err := openDB("mysql", "root:root@tcp(:3990)/geq?multiStatements=true&parseTime=true")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -354,6 +357,29 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					1: {ID: 1, Name: "user1"},
 					2: {ID: 2, Name: "user2"},
 					3: {ID: 3, Name: "user3"},
+				})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			name: "load non-builtin type fields",
+			data: `
+				INSERT INTO transactions (id, user_id, amount, created_at) VALUES
+					(1, 1, 93, '2023-09-24 08:45:01'),
+					(2, 1, 78, '2023-09-24 08:45:02')
+			`,
+			run: func(db *sql.Tx) (err error) {
+				ts, err := b.SelectFrom(b.Transactions).OrderBy(b.Transactions.CreatedAt).Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				t1 := time.Date(2023, time.September, 24, 8, 45, 1, 0, time.UTC)
+				err = assertEqual(ts, []mdl.Transaction{
+					{ID: 1, UserID: 1, Amount: 93, CreatedAt: t1},
+					{ID: 2, UserID: 1, Amount: 78, CreatedAt: t1.Add(time.Second)},
 				})
 				if err != nil {
 					return err

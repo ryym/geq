@@ -6,6 +6,7 @@ package b
 import (
 	"github.com/ryym/geq"
 	"github.com/ryym/geq/tests/mdl"
+	"time"
 )
 
 var Users = NewUsers("")
@@ -71,6 +72,7 @@ type TableTransactions struct {
 	UserID      *geq.Column[uint32]
 	Amount      *geq.Column[int32]
 	Description *geq.Column[string]
+	CreatedAt   *geq.Column[time.Time]
 }
 
 func NewTransactions(alias string) *TableTransactions {
@@ -79,14 +81,15 @@ func NewTransactions(alias string) *TableTransactions {
 		UserID:      geq.NewColumn[uint32]("transactions", "user_id"),
 		Amount:      geq.NewColumn[int32]("transactions", "amount"),
 		Description: geq.NewColumn[string]("transactions", "description"),
+		CreatedAt:   geq.NewColumn[time.Time]("transactions", "created_at"),
 	}
-	columns := []geq.AnyColumn{t.ID, t.UserID, t.Amount, t.Description}
-	sels := []geq.Selection{t.ID, t.UserID, t.Amount, t.Description}
+	columns := []geq.AnyColumn{t.ID, t.UserID, t.Amount, t.Description, t.CreatedAt}
+	sels := []geq.Selection{t.ID, t.UserID, t.Amount, t.Description, t.CreatedAt}
 	t.TableBase = geq.NewTableBase("transactions", alias, columns, sels)
 	return t
 }
 func (t *TableTransactions) FieldPtrs(r *mdl.Transaction) []any {
-	return []any{&r.ID, &r.UserID, &r.Amount, &r.Description}
+	return []any{&r.ID, &r.UserID, &r.Amount, &r.Description, &r.CreatedAt}
 }
 func (t *TableTransactions) As(alias string) *TableTransactions {
 	return NewTransactions(alias)

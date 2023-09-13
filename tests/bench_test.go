@@ -12,6 +12,8 @@ import (
 	"github.com/ryym/geq/tests/mdl"
 )
 
+var benchDBSrc = "root:root@tcp(:3990)/geq?parseTime=true"
+
 func insertTransactions(db *sql.DB) (err error) {
 	sb := new(strings.Builder)
 	sb.WriteString("INSERT INTO transactions (user_id, amount, description) VALUES ")
@@ -32,7 +34,7 @@ func clearTransactions(db *sql.DB, tb *testing.B) {
 }
 
 func BenchmarkSql(tb *testing.B) {
-	db, err := sql.Open("mysql", "root:root@tcp(:3990)/geq")
+	db, err := sql.Open("mysql", benchDBSrc)
 	if err != nil {
 		tb.Fatal(err)
 	}
@@ -50,7 +52,7 @@ func BenchmarkSql(tb *testing.B) {
 		var ts []mdl.Transaction
 		for rows.Next() {
 			var t mdl.Transaction
-			rows.Scan(&t.ID, &t.UserID, &t.Amount, &t.Description)
+			rows.Scan(&t.ID, &t.UserID, &t.Amount, &t.Description, &t.CreatedAt)
 			ts = append(ts, t)
 		}
 		if len(ts) < 100 {
@@ -60,7 +62,7 @@ func BenchmarkSql(tb *testing.B) {
 }
 
 func BenchmarkGeq(tb *testing.B) {
-	db, err := sql.Open("mysql", "root:root@tcp(:3990)/geq")
+	db, err := sql.Open("mysql", benchDBSrc)
 	if err != nil {
 		tb.Fatal(err)
 	}

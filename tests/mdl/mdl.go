@@ -1,5 +1,7 @@
 package mdl
 
+import "time"
+
 type User struct {
 	ID   int64
 	Name string
@@ -16,4 +18,5 @@ type Transaction struct {
 	UserID      uint32
 	Amount      int32
 	Description string
+	CreatedAt   time.Time
 }
