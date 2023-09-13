@@ -388,6 +388,35 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "load non-table rows with non-builtin type fields",
+			data: `
+				INSERT INTO transactions (id, user_id, amount, created_at) VALUES
+					(1, 1, 120, '2023-07-12 08:45:01'),
+					(2, 1, 31, '2023-07-12 08:45:02')
+			`,
+			run: func(db *sql.Tx) (err error) {
+				stats, err := b.SelectAs(&TransactionStats{
+					UserID:        b.Transactions.UserID,
+					TotalAmount:   b.Sum(b.Transactions.Amount),
+					LastCreatedAt: b.Max(b.Transactions.CreatedAt),
+				}).From(b.Transactions).GroupBy(b.Transactions.UserID).Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				err = assertEqual(stats, []TransactionStat{
+					{
+						UserID:        1,
+						TotalAmount:   151,
+						LastCreatedAt: time.Date(2023, time.July, 12, 8, 45, 2, 0, time.UTC),
+					},
+				})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select from table",
 			run: func(db *sql.Tx) (err error) {
 				q := b.SelectFrom(b.Users)

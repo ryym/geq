@@ -19,3 +19,16 @@ func (m *PostStats) FieldPtrs(r *PostStat) []any {
 func (m *PostStats) Selections() []geq.Selection {
 	return []geq.Selection{m.AuthorID, m.PostCount, m.LastTitle}
 }
+
+type TransactionStats struct {
+	UserID        geq.Expr
+	TotalAmount   geq.Expr
+	LastCreatedAt geq.Expr
+}
+
+func (m *TransactionStats) FieldPtrs(r *TransactionStat) []any {
+	return []any{&r.UserID, &r.TotalAmount, &r.LastCreatedAt}
+}
+func (m *TransactionStats) Selections() []geq.Selection {
+	return []geq.Selection{m.UserID, m.TotalAmount, m.LastCreatedAt}
+}
