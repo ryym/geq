@@ -69,8 +69,28 @@ func Count(expr geq.Expr) geq.AnonExpr {
 	return Func("COUNT", expr)
 }
 
+func Sum(expr geq.Expr) geq.AnonExpr {
+	return Func("SUM", expr)
+}
+
+func Min(expr geq.Expr) geq.AnonExpr {
+	return Func("MIN", expr)
+}
+
 func Max(expr geq.Expr) geq.AnonExpr {
 	return Func("MAX", expr)
+}
+
+func Avg(expr geq.Expr) geq.AnonExpr {
+	return Func("AVG", expr)
+}
+
+func Coalesce(exprs ...geq.Expr) geq.AnonExpr {
+	vals := make([]any, 0, len(exprs))
+	for _, e := range exprs {
+		vals = append(vals, e)
+	}
+	return Func("COALESCE", vals...)
 }
 
 func Raw(expr string, args ...any) geq.AnonExpr {
