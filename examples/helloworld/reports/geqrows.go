@@ -1,7 +1,5 @@
 package reports
 
-//geq:file ./geqrows.gen.go
-
 type GeqRows struct {
 	PostStats     PostStat
 	SameNameUsers SameNameUser

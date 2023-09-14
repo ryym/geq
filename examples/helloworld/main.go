@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/ryym/geq/examples/helloworld/b"
+	"github.com/ryym/geq/examples/helloworld/gen/b"
 	"github.com/ryym/geq/examples/helloworld/reports"
 )
 

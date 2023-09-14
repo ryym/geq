@@ -11,6 +11,11 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+type builderConfig struct {
+	outdir  string
+	pkgName string
+}
+
 type builderFileDef struct {
 	PkgName  string
 	Imports  []string
@@ -48,13 +53,17 @@ type builderGeqFileDef struct {
 }
 
 func genBuilderFile(rootPath string, pkg *packages.Package) (err error) {
-	def, err := buildBuilderFileDef(pkg)
+	cfg, err := parseBuilderConfig(pkg)
 	if err != nil {
 		return err
 	}
-	def.PkgName = "b"
 
-	destDir := filepath.Join(rootPath, def.PkgName)
+	def, err := buildBuilderFileDef(pkg, cfg)
+	if err != nil {
+		return err
+	}
+
+	destDir := filepath.Join(rootPath, cfg.outdir)
 	err = os.MkdirAll(destDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create package directory: %w", err)
@@ -85,7 +94,7 @@ func genBuilderFile(rootPath string, pkg *packages.Package) (err error) {
 	return nil
 }
 
-func buildBuilderFileDef(pkg *packages.Package) (def *builderFileDef, err error) {
+func buildBuilderFileDef(pkg *packages.Package, cfg *builderConfig) (def *builderFileDef, err error) {
 	imports := map[string]struct{}{geqPkgPath: {}}
 
 	tables, err := parseTables(pkg, imports)
@@ -106,11 +115,34 @@ func buildBuilderFileDef(pkg *packages.Package) (def *builderFileDef, err error)
 	}
 
 	def = &builderFileDef{
+		PkgName:  cfg.pkgName,
 		Imports:  mapKeys(imports),
 		Tables:   tables,
 		Relships: rels,
 	}
 	return def, nil
+}
+
+func parseBuilderConfig(pkg *packages.Package) (cfg *builderConfig, err error) {
+	m, err := parseGeqConfig(pkg, []string{"geqbld.go"}, []string{"geq:outdir"})
+	if err != nil {
+		return nil, err
+	}
+	outdir, ok := m["geq:outdir"]
+	if !ok {
+		outdir = "./b"
+	}
+	var pkgName string
+	if filepath.Clean(outdir) == "." {
+		pkgName = pkg.Name
+	} else {
+		pkgName = filepath.Base(outdir)
+	}
+	cfg = &builderConfig{
+		outdir:  outdir,
+		pkgName: pkgName,
+	}
+	return cfg, nil
 }
 
 func parseTables(pkg *packages.Package, imports map[string]struct{}) (tables []tableDef, err error) {

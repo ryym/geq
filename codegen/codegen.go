@@ -8,6 +8,8 @@ import (
 	"go/types"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"text/template"
 	"unicode"
 
@@ -120,6 +122,36 @@ func lookupStruct(pkg *packages.Package, name string) (strct *types.Struct, err 
 		return nil, fmt.Errorf("%s must be struct", name)
 	}
 	return strct, nil
+}
+
+func parseGeqConfig(pkg *packages.Package, fileNames []string, configKeys []string) (m map[string]string, err error) {
+	m = make(map[string]string, 0)
+	for i, f := range pkg.GoFiles {
+		fileName := filepath.Base(f)
+		if slices.Contains(fileNames, fileName) {
+			for _, group := range pkg.Syntax[i].Comments {
+				for _, c := range group.List {
+					for _, key := range configKeys {
+						_, ok := m[key]
+						if ok {
+							return nil, fmt.Errorf("duplicate config %s in %s", key, fileName)
+						}
+						m[key] = readGeqConfigValue(key, c.Text)
+					}
+				}
+			}
+		}
+	}
+	return m, nil
+}
+
+func readGeqConfigValue(key, line string) string {
+	prefix := "//" + key
+	if !strings.HasPrefix(line, prefix) {
+		return ""
+	}
+	rest := line[len(prefix):]
+	return strings.TrimSpace(rest)
 }
 
 func buildGoCode(name string, codeTmpl string, data any) (src []byte, err error) {

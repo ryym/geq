@@ -2,7 +2,7 @@ package main
 
 import "github.com/ryym/geq/examples/helloworld/mdl"
 
-//geq:package ./gen/b
+//geq:outdir ./gen/b
 
 type GeqTables struct {
 	Users     mdl.User
