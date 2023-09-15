@@ -2,7 +2,7 @@ package tests
 
 import "time"
 
-type GeqRows struct {
+type GeqMappers struct {
 	PostStats        PostStat
 	TransactionStats TransactionStat
 }

@@ -1,6 +1,6 @@
 package reports
 
-type GeqRows struct {
+type GeqMappers struct {
 	PostStats     PostStat
 	SameNameUsers SameNameUser
 }

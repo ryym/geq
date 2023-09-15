@@ -29,7 +29,7 @@ func Run(cfg *Config) (err error) {
 		switch info.Name() {
 		case "geqbld.go":
 			bldPaths = append(bldPaths, absPath(cwd, filepath.Dir(path)))
-		case "geqrows.go":
+		case "geqmappers.go":
 			rowsPaths = append(rowsPaths, absPath(cwd, filepath.Dir(path)))
 		}
 		return nil

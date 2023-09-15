@@ -34,7 +34,7 @@ func genRowsFile(rootPath string, pkg *packages.Package) (err error) {
 		return err
 	}
 
-	err = writeFile(rootPath, "geqrows.gen.go", src)
+	err = writeFile(rootPath, "mappers.gen.go", src)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func buildRowsFileDef(pkg *packages.Package) (def *rowsFileDef, err error) {
 }
 
 func parseRowMappers(pkg *packages.Package) (mappers []rowMapperDef, err error) {
-	rowsStruct, err := lookupStruct(pkg, "GeqRows")
+	rowsStruct, err := lookupStruct(pkg, "GeqMappers")
 	if err != nil {
 		return nil, err
 	}
@@ -66,17 +66,17 @@ func parseRowMappers(pkg *packages.Package) (mappers []rowMapperDef, err error) 
 		field := rowsStruct.Field(i)
 		fieldType, ok := field.Type().(*types.Named)
 		if !ok {
-			return nil, fmt.Errorf("type of GeqRows field %s must be named", field.Name())
+			return nil, fmt.Errorf("type of GeqMappers field %s must be named", field.Name())
 		}
 
 		fieldStruct, ok := field.Type().Underlying().(*types.Struct)
 		if !ok {
-			return nil, fmt.Errorf("type of GeqRows field %s must be struct", field.Name())
+			return nil, fmt.Errorf("type of GeqMappers field %s must be struct", field.Name())
 		}
 
 		nRowFields := fieldStruct.NumFields()
 		if nRowFields == 0 {
-			return nil, fmt.Errorf("type of GeqRows field %s must have one or more fields", field.Name())
+			return nil, fmt.Errorf("type of GeqMappers field %s must have one or more fields", field.Name())
 		}
 
 		rowFields := make([]rowFieldDef, 0, nRowFields)
