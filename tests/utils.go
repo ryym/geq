@@ -63,11 +63,11 @@ func assertQuery(q geq.AnyQuery, wantSQL string, wantArgs ...any) error {
 
 func assertQueryWith(d geq.Dialect, q geq.AnyQuery, wantSQL string, wantArgs ...any) error {
 	qcfg := geq.NewQueryConfig(d)
-	got, err := q.FinalizeWith(qcfg)
+	got, err := q.BuildWith(qcfg)
 	if err != nil {
 		return err
 	}
-	want := &geq.FinalQuery{Query: wantSQL, Args: wantArgs}
+	want := &geq.BuiltQuery{Query: wantSQL, Args: wantArgs}
 	return assertEqual(got, want)
 }
 

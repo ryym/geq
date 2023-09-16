@@ -124,11 +124,11 @@ func (r *Relship[R, C]) In(recs []R) Expr {
 }
 
 type AnyQuery interface {
-	Finalize() (*FinalQuery, error)
-	FinalizeWith(cfg *QueryConfig) (*FinalQuery, error)
+	Build() (*BuiltQuery, error)
+	BuildWith(cfg *QueryConfig) (*BuiltQuery, error)
 }
 
-type FinalQuery struct {
+type BuiltQuery struct {
 	Query string
 	Args  []any
 }
@@ -186,12 +186,12 @@ func (q *Query[R]) Limit(n uint) *Query[R] {
 	return q
 }
 
-func (q *Query[R]) Finalize() (fq *FinalQuery, err error) {
+func (q *Query[R]) Build() (bq *BuiltQuery, err error) {
 	cfg := &QueryConfig{dialect: defaultDialect}
-	return q.FinalizeWith(cfg)
+	return q.BuildWith(cfg)
 }
 
-func (q *Query[R]) FinalizeWith(cfg *QueryConfig) (fq *FinalQuery, err error) {
+func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	w := newQueryWriter()
 
 	w.Write("SELECT ")
@@ -257,7 +257,7 @@ func (q *Query[R]) FinalizeWith(cfg *QueryConfig) (fq *FinalQuery, err error) {
 
 	// Check w.errs
 
-	return &FinalQuery{
+	return &BuiltQuery{
 		Query: w.String(),
 		Args:  w.Args,
 	}, nil
@@ -269,11 +269,11 @@ func (q *Query[R]) Load(ctx context.Context, db QueryRunner) (recs []R, err erro
 }
 
 func (q *Query[R]) LoadRows(ctx context.Context, db QueryRunner) (rows *sql.Rows, err error) {
-	fq, err := q.Finalize()
+	bq, err := q.Build()
 	if err != nil {
 		return nil, err
 	}
-	return db.QueryContext(ctx, fq.Query, fq.Args...)
+	return db.QueryContext(ctx, bq.Query, bq.Args...)
 }
 
 func (q *Query[R]) WillScan(scanners ...RowsScanner) *MultiScanLoader[R] {
@@ -286,12 +286,12 @@ func (q *Query[R]) WillScan(scanners ...RowsScanner) *MultiScanLoader[R] {
 }
 
 func (q *Query[R]) appendExpr(w *queryWriter, c *QueryConfig) {
-	fq, err := q.FinalizeWith(c)
+	bq, err := q.BuildWith(c)
 	if err != nil {
 		w.AddErr(err)
 	}
 	w.Write("(")
-	w.Write(fq.Query, fq.Args...)
+	w.Write(bq.Query, bq.Args...)
 	w.Write(")")
 }
 

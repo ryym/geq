@@ -39,12 +39,12 @@ func (q *UpdateQuery) Where(exprs ...Expr) *UpdateQuery {
 	return q
 }
 
-func (q *UpdateQuery) Finalize() (fq *FinalQuery, err error) {
+func (q *UpdateQuery) Build() (bq *BuiltQuery, err error) {
 	cfg := &QueryConfig{dialect: defaultDialect}
-	return q.FinalizeWith(cfg)
+	return q.BuildWith(cfg)
 }
 
-func (q *UpdateQuery) FinalizeWith(cfg *QueryConfig) (fq *FinalQuery, err error) {
+func (q *UpdateQuery) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	w := newQueryWriter()
 	w.Write("UPDATE ")
 	w.Write(cfg.dialect.Ident(q.table.TableName()))
@@ -78,13 +78,13 @@ func (q *UpdateQuery) FinalizeWith(cfg *QueryConfig) (fq *FinalQuery, err error)
 		}
 	}
 
-	return &FinalQuery{Query: w.String(), Args: w.Args}, nil
+	return &BuiltQuery{Query: w.String(), Args: w.Args}, nil
 }
 
 func (q *UpdateQuery) Exec(ctx context.Context, db QueryExecutor) (result sql.Result, err error) {
-	fq, err := q.Finalize()
+	bq, err := q.Build()
 	if err != nil {
 		return nil, err
 	}
-	return db.ExecContext(ctx, fq.Query, fq.Args...)
+	return db.ExecContext(ctx, bq.Query, bq.Args...)
 }

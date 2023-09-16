@@ -12,12 +12,12 @@ func main() {
 
 	q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
 	// users, err := q.Load(ctx, db)
-	fq, err := q.Finalize()
+	bq, err := q.Build()
 	if err != nil {
 		fmt.Println(err)
 	}
-	// db.Query(fq.Query, fq.Args...)
-	fmt.Println(fq)
+	// db.Query(bq.Query, bq.Args...)
+	fmt.Println(bq)
 
 	fmt.Println(reports.PostStatsQuery())
 	fmt.Println(reports.SameNameUsersQuery())

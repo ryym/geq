@@ -11,7 +11,7 @@ type MultiScanLoader[Q any] struct {
 }
 
 func (ms *MultiScanLoader[Q]) Load(ctx context.Context, db QueryRunner) (err error) {
-	q, err := ms.query.Finalize()
+	q, err := ms.query.Build()
 	if err != nil {
 		return err
 	}
@@ -89,11 +89,11 @@ func (l *SliceMapLoader[Q, R, K]) Load(ctx context.Context, db QueryRunner) (map
 }
 
 func loadBySingleScanner[Q any](ctx context.Context, db QueryRunner, s RowsScanner, q *Query[Q]) (err error) {
-	fq, err := q.Finalize()
+	bq, err := q.Build()
 	if err != nil {
 		return err
 	}
-	rows, err := db.QueryContext(ctx, fq.Query, fq.Args...)
+	rows, err := db.QueryContext(ctx, bq.Query, bq.Args...)
 	if err != nil {
 		return err
 	}
