@@ -24,12 +24,12 @@ func NewQueryConfig(d Dialect) *QueryConfig {
 }
 
 type TableLike interface {
-	TableName() string
 	appendTable(w *queryWriter, cfg *QueryConfig)
 }
 
 type AnyTable interface {
 	TableLike
+	TableName() string
 	Columns() []AnyColumn
 }
 

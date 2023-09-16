@@ -636,6 +636,43 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "use raw expression in anywhere",
+			run: func(db *sql.Tx) (err error) {
+				q := b.Select(b.Raw("1"), b.Raw("u.id, u.name as foo")).
+					From(b.Raw("users aS u")).
+					Where(b.Raw("1=1 and u.name is not null"), b.Raw("u.id").InAny(1, 2)).
+					OrderBy(b.Raw("u.id Desc"))
+				err = assertQuery(q, sjoin(
+					"SELECT 1, u.id, u.name as foo FROM users aS u",
+					"WHERE 1=1 and u.name is not null AND u.id IN (?, ?) ORDER BY u.id Desc",
+				), 1, 2)
+				if err != nil {
+					return err
+				}
+				rows, err := q.LoadRows(ctx, db)
+				if err != nil {
+					return err
+				}
+				type row struct {
+					N    int
+					ID   int
+					Name string
+				}
+				ret := make([]row, 2)
+				for i := 0; rows.Next(); i++ {
+					rows.Scan(&ret[i].N, &ret[i].ID, &ret[i].Name)
+				}
+				err = assertEqual(ret, []row{
+					{N: 1, ID: 2, Name: "user2"},
+					{N: 1, ID: 1, Name: "user1"},
+				})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "build insert query by values and value maps",
 			run: func(db *sql.Tx) (err error) {
 				q := b.InsertInto(b.Users).

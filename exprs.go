@@ -201,20 +201,19 @@ func (e *funcExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(")")
 }
 
-type rawExpr struct {
+type RawExpr struct {
 	ops
-	expr string
-	args []any
+	sql string
 }
 
-func newRawExpr(expr string, args ...any) *rawExpr {
-	return implOps(&rawExpr{expr: expr, args: args})
+func newRawExpr(sql string) *RawExpr {
+	return implOps(&RawExpr{sql: sql})
 }
 
-func (e *rawExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
-	w.Write(e.expr, e.args...)
+func (e *RawExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	w.Write(e.sql)
 }
 
-// func (e *rawExpr) appendTable(w *queryWriter, cfg *QueryConfig) {
-// 	w.Write(e.expr, e.args...)
-// }
+func (e *RawExpr) appendTable(w *queryWriter, cfg *QueryConfig) {
+	w.Write(e.sql)
+}

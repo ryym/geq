@@ -93,6 +93,6 @@ func Coalesce(exprs ...geq.Expr) geq.AnonExpr {
 	return Func("COALESCE", vals...)
 }
 
-func Raw(expr string, args ...any) geq.AnonExpr {
-	return geq.Builder_Raw(expr, args...)
+func Raw(sql string) *geq.RawExpr {
+	return geq.Builder_Raw(sql)
 }

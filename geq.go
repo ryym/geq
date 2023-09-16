@@ -81,6 +81,6 @@ func Builder_Func(name string, args ...any) AnonExpr {
 	return implOps(&funcExpr{name: name, args: exprs})
 }
 
-func Builder_Raw(expr string, args ...any) AnonExpr {
-	return newRawExpr(expr, args...)
+func Builder_Raw(sql string) *RawExpr {
+	return newRawExpr(sql)
 }
