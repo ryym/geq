@@ -214,3 +214,7 @@ func newRawExpr(expr string, args ...any) *rawExpr {
 func (e *rawExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(e.expr, e.args...)
 }
+
+// func (e *rawExpr) appendTable(w *queryWriter, cfg *QueryConfig) {
+// 	w.Write(e.expr, e.args...)
+// }

@@ -2,5 +2,6 @@ go 1.21.0
 
 use (
 	.
+	./examples/empty
 	./examples/helloworld
 )
