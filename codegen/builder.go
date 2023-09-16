@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"errors"
 	"fmt"
 	"go/types"
 	"os"
@@ -69,26 +70,28 @@ func genBuilderFile(rootPath string, pkg *packages.Package) (err error) {
 		return fmt.Errorf("failed to create package directory: %w", err)
 	}
 
-	src, err := buildGoCode("builderFile", builderFileTmpl, def)
-	if err != nil {
-		return err
-	}
-	err = writeFile(destDir, "schema.gen.go", src)
-	if err != nil {
-		return err
-	}
-
 	geqDef := &builderGeqFileDef{
 		PkgName: def.PkgName,
 		Import:  geqPkgPath,
 	}
-	src, err = buildGoCode("builderGeqFile", builderGeqFileTmpl, geqDef)
+	src, err := buildGoCode("builderGeqFile", builderGeqFileTmpl, geqDef)
 	if err != nil {
 		return err
 	}
 	err = writeFile(destDir, "geq.gen.go", src)
 	if err != nil {
 		return err
+	}
+
+	if len(def.Tables) > 0 {
+		src, err := buildGoCode("builderFile", builderFileTmpl, def)
+		if err != nil {
+			return err
+		}
+		err = writeFile(destDir, "schema.gen.go", src)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -147,6 +150,9 @@ func parseBuilderConfig(pkg *packages.Package) (cfg *builderConfig, err error) {
 
 func parseTables(pkg *packages.Package, imports map[string]struct{}) (tables []tableDef, err error) {
 	tablesStruct, err := lookupStruct(pkg, "GeqTables")
+	if errors.Is(err, errNoStruct) {
+		return tables, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +223,9 @@ func parseTableField(f *types.Var, imports map[string]struct{}) (tfd *tableField
 
 func parseRelationships(pkg *packages.Package, tables []tableDef) (relsMap map[string][]*relshipDef, err error) {
 	relStruct, err := lookupStruct(pkg, "GeqRelationships")
+	if errors.Is(err, errNoStruct) {
+		return relsMap, nil
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -21,6 +21,8 @@ const autoGenWarning = `
 // https://github.com/ryym/geq
 `
 
+var errNoStruct = errors.New("struct not found")
+
 func loadPkgs(cfg *packages.Config, patterns ...string) ([]*packages.Package, error) {
 	pkgs, err := packages.Load(cfg, patterns...)
 	if err != nil {
@@ -38,7 +40,7 @@ func loadPkgs(cfg *packages.Config, patterns ...string) ([]*packages.Package, er
 func lookupStruct(pkg *packages.Package, name string) (strct *types.Struct, err error) {
 	obj := pkg.Types.Scope().Lookup(name)
 	if obj == nil {
-		return nil, fmt.Errorf("no %s struct found", name)
+		return nil, fmt.Errorf("%s: %w", name, errNoStruct)
 	}
 	strct, ok := obj.Type().Underlying().(*types.Struct)
 	if !ok {
