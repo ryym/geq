@@ -8,12 +8,6 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-type rowsFileDef struct {
-	PkgName    string
-	Imports    []string
-	RowMappers []rowMapperDef
-}
-
 type rowMapperDef struct {
 	Name    string
 	RowName string
@@ -22,40 +16,6 @@ type rowMapperDef struct {
 
 type rowFieldDef struct {
 	Name string
-}
-
-func genRowsFile(rootPath string, pkg *packages.Package) (err error) {
-	def, err := buildRowsFileDef(pkg)
-	if err != nil {
-		return err
-	}
-
-	src, err := buildGoCode("rowsFile", rowsFileTmpl, def)
-	if err != nil {
-		return err
-	}
-
-	err = writeFile(rootPath, "mappers.gen.go", src)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func buildRowsFileDef(pkg *packages.Package) (def *rowsFileDef, err error) {
-	imports := make(map[string]struct{}, 0)
-	imports[geqPkgPath] = struct{}{}
-
-	mappers, err := parseRowMappers(pkg, nil, imports)
-	if err != nil {
-		return nil, err
-	}
-	return &rowsFileDef{
-		PkgName:    pkg.Name,
-		Imports:    mapKeys(imports),
-		RowMappers: mappers,
-	}, nil
 }
 
 func parseRowMappers(pkg *packages.Package, cfg *builderConfig, imports map[string]struct{}) (mappers []rowMapperDef, err error) {
@@ -110,28 +70,3 @@ func parseRowMappers(pkg *packages.Package, cfg *builderConfig, imports map[stri
 
 	return mappers, nil
 }
-
-const rowsFileTmpl = `
-package {{.PkgName}}
-
-import (
-{{range .Imports -}}
-	"{{.}}"
-{{end}}
-)
-
-{{range .RowMappers}}
-
-type {{.Name}} struct {
-	{{range .Fields}}
-	{{.Name}} geq.Expr{{end}}
-}
-func (m *{{.Name}}) FieldPtrs(r *{{.RowName}}) []any {
-	return []any{ {{range .Fields}} &r.{{.Name}}, {{end}} }
-}
-func (m *{{.Name}}) Selections() []geq.Selection {
-	return []geq.Selection{ {{range .Fields}} m.{{.Name}}, {{end}} }
-}
-
-{{end}}
-`
