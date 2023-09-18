@@ -136,7 +136,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "load as single slice",
 			run: func(db *sql.Tx) (err error) {
-				users, err := b.SelectFrom(b.Users).OrderBy(b.Users.ID).Load(ctx, db)
+				users, err := geq.SelectFrom(b.Users).OrderBy(b.Users.ID).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -154,7 +154,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "load as single map",
 			run: func(db *sql.Tx) (err error) {
-				userMap, err := b.AsMap(b.Users.Name, b.SelectFrom(b.Users).OrderBy(b.Users.ID)).Load(ctx, db)
+				userMap, err := geq.AsMap(b.Users.Name, geq.SelectFrom(b.Users).OrderBy(b.Users.ID)).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -172,8 +172,8 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "load as single slice map",
 			run: func(db *sql.Tx) (err error) {
-				q := b.SelectFrom(b.Posts).OrderBy(b.Posts.ID)
-				postsMap, err := b.AsSliceMap(b.Posts.AuthorID, q).Load(ctx, db)
+				q := geq.SelectFrom(b.Posts).OrderBy(b.Posts.ID)
+				postsMap, err := geq.AsSliceMap(b.Posts.AuthorID, q).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -200,10 +200,10 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "load as non-table row slice",
 			run: func(db *sql.Tx) (err error) {
-				stats, err := b.SelectAs(&PostStats{
+				stats, err := geq.SelectAs(&PostStats{
 					AuthorID:  b.Posts.AuthorID,
-					PostCount: b.Count(b.Posts.ID),
-					LastTitle: b.Max(b.Posts.Title),
+					PostCount: geq.Count(b.Posts.ID),
+					LastTitle: geq.Max(b.Posts.Title),
 				}).From(b.Posts).
 					GroupBy(b.Posts.AuthorID).
 					OrderBy(b.Posts.AuthorID).
@@ -225,7 +225,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "load as values",
 			run: func(db *sql.Tx) (err error) {
-				ids, err := b.SelectOnly(b.Users.ID).From(b.Users).OrderBy(b.Users.ID).Load(ctx, db)
+				ids, err := geq.SelectOnly(b.Users.ID).From(b.Users).OrderBy(b.Users.ID).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -239,10 +239,10 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "load as sql.Rows",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(b.Raw("2-9"), b.Posts.AuthorID, b.Max(b.Posts.ID).As("maxpostid")).
+				q := geq.Select(geq.Raw("2-9"), b.Posts.AuthorID, geq.Max(b.Posts.ID).As("maxpostid")).
 					From(b.Posts).
 					GroupBy(b.Posts.AuthorID).
-					OrderBy(b.Posts.AuthorID, b.Raw("maxpostid"))
+					OrderBy(b.Posts.AuthorID, geq.Raw("maxpostid"))
 				rows, err := q.LoadRows(ctx, db)
 				if err != nil {
 					return err
@@ -264,8 +264,8 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			name: "scan into single slice",
 			run: func(db *sql.Tx) (err error) {
 				var users []mdl.User
-				q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
-				err = q.WillScan(b.ToSlice(b.Users, &users)).Load(ctx, db)
+				q := geq.SelectFrom(b.Users).OrderBy(b.Users.ID)
+				err = q.WillScan(geq.ToSlice(b.Users, &users)).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -284,8 +284,8 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			name: "scan into single map",
 			run: func(db *sql.Tx) (err error) {
 				var userMap map[int64]mdl.User
-				q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
-				err = q.WillScan(b.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
+				q := geq.SelectFrom(b.Users).OrderBy(b.Users.ID)
+				err = q.WillScan(geq.ToMap(b.Users, b.Users.ID, &userMap)).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -304,8 +304,8 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			name: "scan into single slice map",
 			run: func(db *sql.Tx) (err error) {
 				var postsMap map[int64][]mdl.Post
-				q := b.SelectFrom(b.Posts).OrderBy(b.Posts.ID)
-				err = q.WillScan(b.ToSliceMap(b.Posts, b.Posts.AuthorID, &postsMap)).Load(ctx, db)
+				q := geq.SelectFrom(b.Posts).OrderBy(b.Posts.ID)
+				err = q.WillScan(geq.ToSliceMap(b.Posts, b.Posts.AuthorID, &postsMap)).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -334,10 +334,10 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			run: func(db *sql.Tx) (err error) {
 				var posts []mdl.Post
 				var userMap map[int64]mdl.User
-				q := b.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.ID)
+				q := geq.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.ID)
 				err = q.WillScan(
-					b.ToSlice(b.Posts, &posts),
-					b.ToMap(b.Users, b.Users.ID, &userMap),
+					geq.ToSlice(b.Posts, &posts),
+					geq.ToMap(b.Users, b.Users.ID, &userMap),
 				).Load(ctx, db)
 				if err != nil {
 					return err
@@ -372,7 +372,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					(2, 1, 78, '2023-09-24 08:45:02')
 			`,
 			run: func(db *sql.Tx) (err error) {
-				ts, err := b.SelectFrom(b.Transactions).OrderBy(b.Transactions.CreatedAt).Load(ctx, db)
+				ts, err := geq.SelectFrom(b.Transactions).OrderBy(b.Transactions.CreatedAt).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -395,10 +395,10 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					(2, 1, 31, '2023-07-12 08:45:02')
 			`,
 			run: func(db *sql.Tx) (err error) {
-				stats, err := b.SelectAs(&TransactionStats{
+				stats, err := geq.SelectAs(&TransactionStats{
 					UserID:        b.Transactions.UserID,
-					TotalAmount:   b.Sum(b.Transactions.Amount),
-					LastCreatedAt: b.Max(b.Transactions.CreatedAt),
+					TotalAmount:   geq.Sum(b.Transactions.Amount),
+					LastCreatedAt: geq.Max(b.Transactions.CreatedAt),
 				}).From(b.Transactions).GroupBy(b.Transactions.UserID).Load(ctx, db)
 				if err != nil {
 					return err
@@ -419,7 +419,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select from table",
 			run: func(db *sql.Tx) (err error) {
-				q := b.SelectFrom(b.Users)
+				q := geq.SelectFrom(b.Users)
 				err = assertQuery(q, "SELECT users.id, users.name FROM users")
 				if err != nil {
 					return err
@@ -434,7 +434,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					{ID: 2, Name: "user2"},
 					{ID: 3, Name: "user3"},
 				}
-				q := b.SelectVia(users, b.Posts, b.Posts.Author)
+				q := geq.SelectVia(users, b.Posts, b.Posts.Author)
 				err = assertQuery(q, sjoin(
 					"SELECT posts.id, posts.author_id, posts.title FROM posts",
 					"WHERE posts.author_id IN (?, ?)",
@@ -448,7 +448,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select with join using relationship",
 			run: func(db *sql.Tx) (err error) {
-				q := b.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID)
+				q := geq.SelectFrom(b.Posts).Joins(b.Posts.Author).OrderBy(b.Posts.AuthorID)
 				err = assertQuery(q, sjoin(
 					"SELECT posts.id, posts.author_id, posts.title FROM posts",
 					"INNER JOIN users ON posts.author_id = users.id",
@@ -463,12 +463,12 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select expressions",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(
+				q := geq.Select(
 					b.Users.ID,
 					b.Users.Name.As("foo"),
 					b.Posts.ID.Eq(3),
 					b.Posts.Title.Eq("title").As("bar"),
-					b.Null(),
+					geq.Null(),
 				)
 				err = assertQuery(q, sjoin(
 					"SELECT users.id, users.name AS foo, posts.id = ?, posts.title = ? AS bar, NULL",
@@ -482,7 +482,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select basic operations",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(
+				q := geq.Select(
 					b.Users.ID.Eq(3),
 					b.Users.ID.Neq(3),
 					b.Users.ID.Gt(4),
@@ -511,7 +511,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select LIKE expressions",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(
+				q := geq.Select(
 					b.Users.Name.LikePrefix("user"),
 					b.Users.Name.LikeSuffix(b.Users.ID),
 					b.Users.Name.LikePartial("s"),
@@ -524,7 +524,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					return err
 				}
 
-				users, err := b.SelectFrom(b.Users).Where(b.Users.Name.LikePrefix("user")).Load(ctx, db)
+				users, err := geq.SelectFrom(b.Users).Where(b.Users.Name.LikePrefix("user")).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -533,7 +533,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					return err
 				}
 
-				users, err = b.SelectFrom(b.Users).Where(b.Users.Name.LikeSuffix(b.Users.ID)).Load(ctx, db)
+				users, err = geq.SelectFrom(b.Users).Where(b.Users.Name.LikeSuffix(b.Users.ID)).Load(ctx, db)
 				if err != nil {
 					return err
 				}
@@ -548,9 +548,9 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select IN expressions",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(
+				q := geq.Select(
 					b.Users.ID.InAny(1, "2", "str"),
-					b.Users.Name.InAny(b.Select(b.Raw("'user'"))),
+					b.Users.Name.InAny(geq.Select(geq.Raw("'user'"))),
 				)
 				err = assertQuery(q,
 					"SELECT users.id IN (?, ?, ?), users.name IN ((SELECT 'user'))",
@@ -565,10 +565,10 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select function calls",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(
-					b.Count(b.Users.ID),
-					b.Max(b.Users.Name),
-					b.Func("MYFUNC", 1, b.Users.ID),
+				q := geq.Select(
+					geq.Count(b.Users.ID),
+					geq.Max(b.Users.Name),
+					geq.Func("MYFUNC", 1, b.Users.ID),
 				)
 				err = assertQuery(q, "SELECT COUNT(users.id), MAX(users.name), MYFUNC(?, users.id)", 1)
 				if err != nil {
@@ -580,7 +580,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select with grouping",
 			run: func(db *sql.Tx) (err error) {
-				q := b.SelectFrom(b.Users, b.Users.Name, b.Max(b.Users.ID)).GroupBy(b.Users.Name)
+				q := geq.SelectFrom(b.Users, b.Users.Name, geq.Max(b.Users.ID)).GroupBy(b.Users.Name)
 				err = assertQuery(q, "SELECT users.name, MAX(users.id) FROM users GROUP BY users.name")
 				if err != nil {
 					return err
@@ -591,7 +591,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select with limit",
 			run: func(db *sql.Tx) (err error) {
-				q := b.SelectFrom(b.Users, b.Users.ID).Limit(2)
+				q := geq.SelectFrom(b.Users, b.Users.ID).Limit(2)
 				err = assertQuery(q, "SELECT users.id FROM users LIMIT 2")
 				if err != nil {
 					return err
@@ -602,7 +602,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select from sub query",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(b.Raw("t.id"), b.Raw("t.title")).From(b.SelectFrom(b.Posts).As("t"))
+				q := geq.Select(geq.Raw("t.id"), geq.Raw("t.title")).From(geq.SelectFrom(b.Posts).As("t"))
 				err = assertQuery(q, sjoin(
 					"SELECT t.id, t.title FROM (SELECT posts.id, posts.author_id, posts.title FROM posts) AS t",
 				))
@@ -615,8 +615,8 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "use queries as expressions",
 			run: func(db *sql.Tx) (err error) {
-				one, two := b.Raw("1"), b.Raw("2")
-				q := b.Select(b.Select(one), b.Select(two).As("two")).Where(two.Gte(b.Select(one).Add(one)))
+				one, two := geq.Raw("1"), geq.Raw("2")
+				q := geq.Select(geq.Select(one), geq.Select(two).As("two")).Where(two.Gte(geq.Select(one).Add(one)))
 				err = assertQuery(q, "SELECT (SELECT 1), (SELECT 2) AS two WHERE 2 >= (SELECT 1) + 1")
 				if err != nil {
 					return err
@@ -638,10 +638,10 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "use raw expression in anywhere",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Select(b.Raw("1"), b.Raw("u.id, u.name as foo")).
-					From(b.Raw("users aS u")).
-					Where(b.Raw("1=1 and u.name is not null"), b.Raw("u.id").InAny(1, 2)).
-					OrderBy(b.Raw("u.id Desc"))
+				q := geq.Select(geq.Raw("1"), geq.Raw("u.id, u.name as foo")).
+					From(geq.Raw("users aS u")).
+					Where(geq.Raw("1=1 and u.name is not null"), geq.Raw("u.id").InAny(1, 2)).
+					OrderBy(geq.Raw("u.id Desc"))
 				err = assertQuery(q, sjoin(
 					"SELECT 1, u.id, u.name as foo FROM users aS u",
 					"WHERE 1=1 and u.name is not null AND u.id IN (?, ?) ORDER BY u.id Desc",
@@ -675,7 +675,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "build insert query by values and value maps",
 			run: func(db *sql.Tx) (err error) {
-				q := b.InsertInto(b.Users).
+				q := geq.InsertInto(b.Users).
 					Values(
 						b.Users.ID.Set(1),
 						b.Users.Name.Set("name"),
@@ -687,7 +687,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 						},
 						geq.ValueMap{
 							b.Users.ID:   "invalid-id",
-							b.Users.Name: b.Func("NOW"),
+							b.Users.Name: geq.Func("NOW"),
 						},
 					)
 				err = assertQuery(q, sjoin(
@@ -702,7 +702,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "insert records",
 			run: func(db *sql.Tx) (err error) {
-				q := b.InsertInto(b.Users).
+				q := geq.InsertInto(b.Users).
 					Values(
 						b.Users.ID.Set(100),
 						b.Users.Name.Set("name100"),
@@ -730,7 +730,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "update records",
 			run: func(db *sql.Tx) (err error) {
-				q := b.Update(b.Posts).Set(
+				q := geq.Update(b.Posts).Set(
 					b.Posts.AuthorID.Set(1),
 					b.Posts.Title.Set("title"),
 				).Where(b.Posts.ID.In([]int64{3, 4}))
@@ -744,7 +744,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 				if err != nil {
 					return err
 				}
-				posts, err := b.SelectFrom(b.Posts).
+				posts, err := geq.SelectFrom(b.Posts).
 					Where(b.Posts.ID.In([]int64{3, 4})).
 					OrderBy(b.Posts.ID).
 					Load(ctx, db)

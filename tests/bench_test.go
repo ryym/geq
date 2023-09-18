@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/ryym/geq"
 	"github.com/ryym/geq/tests/b"
 	"github.com/ryym/geq/tests/mdl"
 )
@@ -75,7 +76,7 @@ func BenchmarkGeq(tb *testing.B) {
 
 	tb.ResetTimer()
 	for i := 0; i < tb.N; i++ {
-		q := b.SelectFrom(b.Transactions).OrderBy(b.Transactions.ID).Limit(100)
+		q := geq.SelectFrom(b.Transactions).OrderBy(b.Transactions.ID).Limit(100)
 		ts, err := q.Load(ctx, db)
 		if err != nil {
 			tb.Fatal(err)

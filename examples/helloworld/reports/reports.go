@@ -2,7 +2,7 @@ package reports
 
 import (
 	"github.com/ryym/geq"
-	"github.com/ryym/geq/tests/b"
+	"github.com/ryym/geq/examples/helloworld/gen/b"
 )
 
 func SomeInnerFunc() string {
@@ -10,19 +10,19 @@ func SomeInnerFunc() string {
 }
 
 func PostStatsQuery() (*geq.BuiltQuery, error) {
-	q := b.SelectAs(&PostStats{
+	q := geq.SelectAs(&PostStats{
 		AuthorID:  b.Posts.AuthorID,
-		PostCount: b.Count(b.Posts.ID),
-		LastTitle: b.Max(b.Posts.Title),
+		PostCount: geq.Count(b.Posts.ID),
+		LastTitle: geq.Max(b.Posts.Title),
 	}).GroupBy(b.Posts.AuthorID)
 	// postStats, err := q.Load(ctx, db)
 	return q.Build()
 }
 
 func SameNameUsersQuery() (*geq.BuiltQuery, error) {
-	q := b.SelectAs(&SameNameUsers{
+	q := geq.SelectAs(&SameNameUsers{
 		Name:  b.Users.Name,
-		Count: b.Count(b.Users.ID),
+		Count: geq.Count(b.Users.ID),
 	}).From(b.Users).GroupBy(b.Users.Name)
 	// sameNameUsers, err := q.Load(ctx, db)
 	return q.Build()

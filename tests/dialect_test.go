@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/ryym/geq"
-	"github.com/ryym/geq/tests/b"
 )
 
 func TestQueryVariations(t *testing.T) {
-	q := b.Select(b.Concat("a", "b", "c"))
+	q := geq.Select(geq.Concat("a", "b", "c"))
 	err := assertQueryWith(&geq.DialectGeneric{}, q, "SELECT ? || ? || ?", "a", "b", "c")
 	if err != nil {
 		t.Error(err)

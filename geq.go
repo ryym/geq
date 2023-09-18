@@ -84,3 +84,108 @@ func Builder_Func(name string, args ...any) AnonExpr {
 func Builder_Raw(sql string) *RawExpr {
 	return newRawExpr(sql)
 }
+
+func AsMap[R any, K comparable](key *Column[K], q *Query[R]) *MapLoader[R, R, K] {
+	return &MapLoader[R, R, K]{query: q, mapper: q.mapper, key: key}
+}
+
+func AsSliceMap[R any, K comparable](key *Column[K], q *Query[R]) *SliceMapLoader[R, R, K] {
+	return &SliceMapLoader[R, R, K]{query: q, mapper: q.mapper, key: key}
+}
+
+func ToSlice[R any](mapper RowMapper[R], dest *[]R) *SliceScanner[R] {
+	return &SliceScanner[R]{mapper: mapper, dest: dest}
+}
+
+func ToMap[R any, K comparable](mapper RowMapper[R], key TypedSelection[K], dest *map[K]R) *MapScanner[R, K] {
+	return &MapScanner[R, K]{mapper: mapper, dest: dest, key: key}
+}
+
+func ToSliceMap[R any, K comparable](mapper RowMapper[R], key TypedSelection[K], dest *map[K][]R) *SliceMapScanner[R, K] {
+	return &SliceMapScanner[R, K]{mapper: mapper, dest: dest, key: key}
+}
+
+func SelectFrom[R any](table Table[R], sels ...Selection) *Query[R] {
+	q := newQuery(table).From(table)
+	if len(sels) > 0 {
+		q.selections = sels
+	}
+	return q
+}
+
+func SelectAs[R any](mapper RowMapper[R]) *Query[R] {
+	return newQuery(mapper)
+}
+
+func SelectOnly[V any](col *Column[V]) *Query[V] {
+	mapper := &ValueMapper[V]{sels: []Selection{col}}
+	return newQuery(mapper)
+}
+
+func Select(sels ...Selection) *Query[struct{}] {
+	mapper := &EmptyMapper{}
+	q := newQuery[struct{}](mapper)
+	q.selections = sels
+	return q
+}
+
+func SelectVia[S, T, C any](srcs []S, table Table[T], relship *Relship[S, C]) *Query[T] {
+	return newQuery(table).From(table).Where(relship.In(srcs))
+}
+
+func InsertInto(table AnyTable) *InsertQuery {
+	return newInsertQuery(table)
+}
+
+func Update(table AnyTable) *UpdateQuery {
+	return newUpdateQuery(table)
+}
+
+// XXX: necessary?
+func Null() AnonExpr {
+	return implOps(&nullExpr{})
+}
+
+func Concat(vals ...any) AnonExpr {
+	return newConcatExpr(vals...)
+}
+
+func Raw(sql string) *RawExpr {
+	return newRawExpr(sql)
+}
+
+func Func(name string, args ...any) AnonExpr {
+	exprs := make([]Expr, 0, len(args))
+	for _, arg := range args {
+		exprs = append(exprs, toExpr(arg))
+	}
+	return implOps(&funcExpr{name: name, args: exprs})
+}
+
+func Count(expr Expr) AnonExpr {
+	return Func("COUNT", expr)
+}
+
+func Sum(expr Expr) AnonExpr {
+	return Func("SUM", expr)
+}
+
+func Min(expr Expr) AnonExpr {
+	return Func("MIN", expr)
+}
+
+func Max(expr Expr) AnonExpr {
+	return Func("MAX", expr)
+}
+
+func Avg(expr Expr) AnonExpr {
+	return Func("AVG", expr)
+}
+
+func Coalesce(exprs ...Expr) AnonExpr {
+	vals := make([]any, 0, len(exprs))
+	for _, e := range exprs {
+		vals = append(vals, e)
+	}
+	return Func("COALESCE", vals...)
+}

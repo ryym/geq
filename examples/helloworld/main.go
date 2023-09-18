@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/ryym/geq"
 	"github.com/ryym/geq/examples/helloworld/gen/b"
 	"github.com/ryym/geq/examples/helloworld/reports"
 )
@@ -10,7 +11,7 @@ import (
 func main() {
 	fmt.Println("helloworld")
 
-	q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
+	q := geq.SelectFrom(b.Users).OrderBy(b.Users.ID)
 	// users, err := q.Load(ctx, db)
 	bq, err := q.Build()
 	if err != nil {
