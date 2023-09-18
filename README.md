@@ -18,7 +18,7 @@ Unsupported:
 
 ### Hello, world
 
-Geq generates a query builder package based on a file named geqbld.go.
+Geq generates a query builder package based on a file named `geqbld.go` .
 With just an empty file, You can try building queries even without an actual database.
 
 ```bash
@@ -274,6 +274,19 @@ type User struct {
 Nested relation loading is powerful but sometimes make things so complicated.
 Instead, you can load relevant records in two ways:
 
+#### Load individually
+
+```go
+users, err := b.SelectFrom(b.Users).OrderBy(b.Users.ID).Limit(50).Load(ctx, db)
+postsMap, err := b.AsSliceMap(
+    b.Posts.ID,
+    b.SelectFrom(b.Posts).Where(b.Posts.Author.In(users)).OrderBy(b.Posts.ID).Load(ctx, db),
+).Load(ctx, db)
+```
+
+- It requires multiple round-trips to the database.
+- It retrieves records without duplicate due to table joining.
+
 #### Load by one query using joins
 
 ```go
@@ -289,22 +302,9 @@ err := q.WillScan(
 - It requires only one round-trip to the database.
 - It may load duplicate records if the relationship is not 1:1.
 
-#### Load individually
-
-```go
-users, err := b.SelectFrom(b.Users).OrderBy(b.Users.ID).Limit(50).Load(ctx, db)
-postsMap, err := b.AsSliceMap(
-    b.Posts.ID,
-    b.SelectFrom(b.Posts).Where(b.Posts.Author.In(users)).OrderBy(b.Posts.ID).Load(ctx, db),
-).Load(ctx, db)
-```
-
-- It requires multiple round-trips to the database.
-- It retrieves records without duplicate due to table joining.
-
 ## Non-table result mapping
 
-When you want to load rows not corresponding to database tables, you generate custom mappers.
+When you want to load rows not corresponding to database tables, you generate row mappers.
 
 ```go
 package mdl
@@ -328,7 +328,7 @@ type GeqMappers struct {
 ```
 
 ```bash
-# Re-generate your query builder with custom row mappers.
+# Re-generate your query builder with row mappers.
 geq .
 ```
 
@@ -351,3 +351,91 @@ userIDs, err := b.SelectOnly(b.Users.ID).OrderBy(b.Users.ID).Load(ctx, db)
 // Currently non-column expressions are not supported.
 // _, _ = b.SelectOnly(b.Count(b.Users.ID)).From(b.Users)
 ```
+
+----
+
+# Usage
+
+We use these sample models in the following guides:
+
+```go
+package mdl
+
+type User struct {
+	ID   uint64
+	Name string
+}
+
+type Post struct {
+	ID       uint64
+	AuthorID uint64
+	Title    string
+}
+```
+
+## Result mapping
+
+### Load as `*sql.Rows`
+
+```go
+q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
+rows, err := q.LoadRows(context.Background(), db)
+```
+
+### Load as slice
+
+```go
+q := b.SelectFrom(b.Users).OrderBy(b.Users.ID)
+users, err := q.Load(context.Background(), db)
+fmt.Printf("%#+v\n", users)
+//=> []mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x2, Name:"bar"}, mdl.User{ID:0x3, Name:"foo"}}
+```
+
+### Load as map
+
+```go
+q := b.SelectFrom(b.Users)
+userMap, err := b.AsMap(b.Users.ID, q).Load(context.Background(), db)
+fmt.Printf("%#+v\n", userMap)
+//=> map[uint64]mdl.User{0x1:mdl.User{ID:0x1, Name:"foo"}, 0x2:mdl.User{ID:0x2, Name:"bar"}, 0x3:mdl.User{ID:0x3, Name:"foo"}}
+```
+
+### Load as map of slices
+
+```go
+q := b.SelectFrom(b.Users)
+usersMap, err := b.AsSliceMap(b.Users.Name, q).Load(context.Background(), db)
+fmt.Printf("%#+v\n", usersMap)
+//=> map[string][]mdl.User{"bar":[]mdl.User{mdl.User{ID:0x2, Name:"bar"}}, "foo":[]mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x3, Name:"foo"}}}
+```
+
+### Scan into multiple results
+
+```go
+var users []mdl.User
+var postsMap map[uint64][]mdl.Post
+q := b.SelectFrom(b.Users).Joins(b.Users.Posts).OrderBy(b.Users.ID, b.Posts.ID)
+err := q.WillScan(
+    b.ToSlice(b.Users, &users),
+    b.ToSliceMap(b.Posts, b.Posts.AuthorID, &postsMap),
+).Load(context.Background(), db)
+fmt.Printf("%#+v\n", users)
+//=> []mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x2, Name:"bar"}, mdl.User{ID:0x3, Name:"foo"}}
+fmt.Printf("%#+v\n", postsMap)
+//=. map[uint64][]mdl.Post{0x1:[]mdl.Post{mdl.Post{ID:0x1, AuthorID:0x1, Title:"user1-post1"}, mdl.Post{ID:0x2, AuthorID:0x1, Title:"user1-post2"}}, 0x2:[]mdl.Post{mdl.Post{ID:0x3, AuthorID:0x2, Title:"user2-post1"}}, 0x3:[]mdl.Post{mdl.Post{ID:0x4, AuthorID:0x3, Title:"user3-post1"}}}
+```
+
+## Querying
+
+### Select records from table
+
+```go
+users, err := b.SelectFrom(b.Users).Load(ctx, db)
+```
+
+### Select single values
+
+### Select records via table relationships
+
+### Select non-table record results
+

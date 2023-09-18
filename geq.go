@@ -109,3 +109,10 @@ func Coalesce(exprs ...Expr) AnonExpr {
 	}
 	return Func("COALESCE", vals...)
 }
+
+// XXX: トップレベル関数を generate しない方針ある？
+// geq. から呼ぶ。メリットは schema 不要ならコード生成なしで試せる。
+// また geqbld, geqmappers を分けずに済むかも？ (分けた方が良い？)
+// tables, relationships, mappers があればそれを生成する、だけ。
+// そうすると table の生成を複数箇所に分散したりも自然にできる。
+// Count, Max とかまで geq 呼び出しになるのがちょっと微妙だが、有りかも。
