@@ -13,8 +13,9 @@ import (
 )
 
 type builderConfig struct {
-	outdir  string
-	pkgName string
+	outdir     string
+	outPkgPath string
+	outPkgName string
 }
 
 type builderFileDef struct {
@@ -66,12 +67,12 @@ func genBuilderFile(rootPath string, pkg *packages.Package) (err error) {
 		return fmt.Errorf("failed to create package directory: %w", err)
 	}
 
-	if len(def.Tables) > 0 {
+	if len(def.Tables) > 0 || len(def.RowMappers) > 0 {
 		src, err := buildGoCode("builderFile", builderFileTmpl, def)
 		if err != nil {
 			return err
 		}
-		err = writeFile(destDir, "schema.gen.go", src)
+		err = writeFile(destDir, "geq.gen.go", src)
 		if err != nil {
 			return err
 		}
@@ -83,12 +84,12 @@ func genBuilderFile(rootPath string, pkg *packages.Package) (err error) {
 func buildBuilderFileDef(pkg *packages.Package, cfg *builderConfig) (def *builderFileDef, err error) {
 	imports := map[string]struct{}{geqPkgPath: {}}
 
-	tables, err := parseTables(pkg, imports)
+	tables, err := parseTables(pkg, cfg, imports)
 	if err != nil {
 		return nil, err
 	}
 
-	relsMap, err := parseRelationships(pkg, tables)
+	relsMap, err := parseRelationships(pkg, cfg, tables)
 	if err != nil {
 		return nil, err
 	}
@@ -100,13 +101,13 @@ func buildBuilderFileDef(pkg *packages.Package, cfg *builderConfig) (def *builde
 		rels = append(rels, rs...)
 	}
 
-	mappers, err := parseRowMappers(pkg, imports)
+	mappers, err := parseRowMappers(pkg, cfg, imports)
 	if err != nil {
 		return nil, err
 	}
 
 	def = &builderFileDef{
-		PkgName:    cfg.pkgName,
+		PkgName:    cfg.outPkgName,
 		Imports:    mapKeys(imports),
 		Tables:     tables,
 		Relships:   rels,
@@ -124,20 +125,28 @@ func parseBuilderConfig(pkg *packages.Package) (cfg *builderConfig, err error) {
 	if !ok {
 		outdir = "./b"
 	}
+	if strings.Contains(outdir, "..") {
+		return nil, fmt.Errorf("geq:outdir must not contain '..'")
+	}
+
 	var pkgName string
+	var pkgPath string
 	if filepath.Clean(outdir) == "." {
 		pkgName = pkg.Name
+		pkgPath = pkg.PkgPath
 	} else {
 		pkgName = filepath.Base(outdir)
+		pkgPath = fmt.Sprintf("%s/%s", pkg.PkgPath, pkgName)
 	}
 	cfg = &builderConfig{
-		outdir:  outdir,
-		pkgName: pkgName,
+		outdir:     outdir,
+		outPkgPath: pkgPath,
+		outPkgName: pkgName,
 	}
 	return cfg, nil
 }
 
-func parseTables(pkg *packages.Package, imports map[string]struct{}) (tables []tableDef, err error) {
+func parseTables(pkg *packages.Package, cfg *builderConfig, imports map[string]struct{}) (tables []tableDef, err error) {
 	tablesStruct, err := lookupStruct(pkg, "GeqTables")
 	if errors.Is(err, errNoStruct) {
 		return tables, nil
@@ -165,14 +174,19 @@ func parseTables(pkg *packages.Package, imports map[string]struct{}) (tables []t
 			return nil, fmt.Errorf("type of GeqTables field %s must have one or more fields", mapperName)
 		}
 
+		var rowName string
 		fPkg := fieldType.Obj().Pkg()
-		imports[fPkg.Path()] = struct{}{}
-		rowName := fmt.Sprintf("%s.%s", fPkg.Name(), fieldType.Obj().Name())
+		if cfg.outPkgPath == fPkg.Path() {
+			rowName = fieldType.Obj().Name()
+		} else {
+			imports[fPkg.Path()] = struct{}{}
+			rowName = fmt.Sprintf("%s.%s", fPkg.Name(), fieldType.Obj().Name())
+		}
 
 		tableFields := make([]tableFieldDef, 0, nTableFields)
 		for j := 0; j < nTableFields; j++ {
 			f := fieldStruct.Field(j)
-			tfd, err := parseTableField(f, imports)
+			tfd, err := parseTableField(f, cfg, imports)
 			if err != nil {
 				return nil, fmt.Errorf("table row %s invalid: %w", rowName, err)
 			}
@@ -191,15 +205,19 @@ func parseTables(pkg *packages.Package, imports map[string]struct{}) (tables []t
 	return tables, nil
 }
 
-func parseTableField(f *types.Var, imports map[string]struct{}) (tfd *tableFieldDef, err error) {
+func parseTableField(f *types.Var, cfg *builderConfig, imports map[string]struct{}) (tfd *tableFieldDef, err error) {
 	var typeName string
 	switch ft := f.Type().(type) {
 	case *types.Basic:
 		typeName = ft.Name()
 	case *types.Named:
 		ftPkg := ft.Obj().Pkg()
-		imports[ftPkg.Path()] = struct{}{}
-		typeName = fmt.Sprintf("%s.%s", ftPkg.Name(), ft.Obj().Name())
+		if cfg.outPkgPath == ftPkg.Path() {
+			typeName = ft.Obj().Name()
+		} else {
+			imports[ftPkg.Path()] = struct{}{}
+			typeName = fmt.Sprintf("%s.%s", ftPkg.Name(), ft.Obj().Name())
+		}
 	default:
 		return nil, fmt.Errorf("type of field %s invalid", f.Name())
 	}
@@ -210,7 +228,7 @@ func parseTableField(f *types.Var, imports map[string]struct{}) (tfd *tableField
 	}, nil
 }
 
-func parseRelationships(pkg *packages.Package, tables []tableDef) (relsMap map[string][]*relshipDef, err error) {
+func parseRelationships(pkg *packages.Package, cfg *builderConfig, tables []tableDef) (relsMap map[string][]*relshipDef, err error) {
 	relStruct, err := lookupStruct(pkg, "GeqRelationships")
 	if errors.Is(err, errNoStruct) {
 		return relsMap, nil
@@ -241,7 +259,13 @@ func parseRelationships(pkg *packages.Package, tables []tableDef) (relsMap map[s
 				return nil, fmt.Errorf("type of field of GeqRelationships %s.%s must be named struct", mapperL, f.Name())
 			}
 
-			rowType := fmt.Sprintf("%s.%s", ft.Obj().Pkg().Name(), ft.Obj().Name())
+			var rowType string
+			ftPkg := ft.Obj().Pkg()
+			if cfg.outPkgPath == ftPkg.Path() {
+				rowType = ft.Obj().Name()
+			} else {
+				rowType = fmt.Sprintf("%s.%s", ft.Obj().Pkg().Name(), ft.Obj().Name())
+			}
 			mapperR, ok := mapperMap[rowType]
 			if !ok {
 				return nil, fmt.Errorf("invalid relationship row type: %s", rowType)

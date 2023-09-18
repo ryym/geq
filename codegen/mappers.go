@@ -47,7 +47,7 @@ func buildRowsFileDef(pkg *packages.Package) (def *rowsFileDef, err error) {
 	imports := make(map[string]struct{}, 0)
 	imports[geqPkgPath] = struct{}{}
 
-	mappers, err := parseRowMappers(pkg, imports)
+	mappers, err := parseRowMappers(pkg, nil, imports)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func buildRowsFileDef(pkg *packages.Package) (def *rowsFileDef, err error) {
 	}, nil
 }
 
-func parseRowMappers(pkg *packages.Package, imports map[string]struct{}) (mappers []rowMapperDef, err error) {
+func parseRowMappers(pkg *packages.Package, cfg *builderConfig, imports map[string]struct{}) (mappers []rowMapperDef, err error) {
 	rowsStruct, err := lookupStruct(pkg, "GeqMappers")
 	if errors.Is(err, errNoStruct) {
 		return mappers, nil
@@ -76,9 +76,14 @@ func parseRowMappers(pkg *packages.Package, imports map[string]struct{}) (mapper
 			return nil, fmt.Errorf("type of GeqMappers field %s must be named", field.Name())
 		}
 
+		var rowName string
 		ftPkg := fieldType.Obj().Pkg()
-		rowName := fmt.Sprintf("%s.%s", ftPkg.Name(), fieldType.Obj().Name())
-		imports[ftPkg.Path()] = struct{}{}
+		if cfg.outPkgPath == ftPkg.Path() {
+			rowName = fieldType.Obj().Name()
+		} else {
+			rowName = fmt.Sprintf("%s.%s", ftPkg.Name(), fieldType.Obj().Name())
+			imports[ftPkg.Path()] = struct{}{}
+		}
 
 		fieldStruct, ok := field.Type().Underlying().(*types.Struct)
 		if !ok {
