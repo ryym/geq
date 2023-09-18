@@ -200,7 +200,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "load as non-table row slice",
 			run: func(db *sql.Tx) (err error) {
-				stats, err := geq.SelectAs(&PostStats{
+				stats, err := geq.SelectAs(&b.PostStats{
 					AuthorID:  b.Posts.AuthorID,
 					PostCount: geq.Count(b.Posts.ID),
 					LastTitle: geq.Max(b.Posts.Title),
@@ -211,7 +211,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 				if err != nil {
 					return err
 				}
-				err = assertEqual(stats, []PostStat{
+				err = assertEqual(stats, []mdl.PostStat{
 					{AuthorID: 1, PostCount: 2, LastTitle: "user1-post2"},
 					{AuthorID: 2, PostCount: 1, LastTitle: "user2-post1"},
 					{AuthorID: 3, PostCount: 3, LastTitle: "user3-post3"},
@@ -395,7 +395,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 					(2, 1, 31, '2023-07-12 08:45:02')
 			`,
 			run: func(db *sql.Tx) (err error) {
-				stats, err := geq.SelectAs(&TransactionStats{
+				stats, err := geq.SelectAs(&b.TransactionStats{
 					UserID:        b.Transactions.UserID,
 					TotalAmount:   geq.Sum(b.Transactions.Amount),
 					LastCreatedAt: geq.Max(b.Transactions.CreatedAt),
@@ -403,7 +403,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 				if err != nil {
 					return err
 				}
-				err = assertEqual(stats, []TransactionStat{
+				err = assertEqual(stats, []mdl.TransactionStat{
 					{
 						UserID:        1,
 						TotalAmount:   151,

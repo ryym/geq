@@ -18,10 +18,11 @@ type builderConfig struct {
 }
 
 type builderFileDef struct {
-	PkgName  string
-	Imports  []string
-	Tables   []tableDef
-	Relships []*relshipDef
+	PkgName    string
+	Imports    []string
+	Tables     []tableDef
+	Relships   []*relshipDef
+	RowMappers []rowMapperDef
 }
 
 type tableDef struct {
@@ -99,11 +100,17 @@ func buildBuilderFileDef(pkg *packages.Package, cfg *builderConfig) (def *builde
 		rels = append(rels, rs...)
 	}
 
+	mappers, err := parseRowMappers(pkg, imports)
+	if err != nil {
+		return nil, err
+	}
+
 	def = &builderFileDef{
-		PkgName:  cfg.pkgName,
-		Imports:  mapKeys(imports),
-		Tables:   tables,
-		Relships: rels,
+		PkgName:    cfg.pkgName,
+		Imports:    mapKeys(imports),
+		Tables:     tables,
+		Relships:   rels,
+		RowMappers: mappers,
 	}
 	return def, nil
 }
@@ -345,4 +352,18 @@ func (t *Table{{.Name}}) As(alias string) *Table{{.Name}} {
 
 {{end}}
 
+{{range .RowMappers}}
+
+type {{.Name}} struct {
+	{{range .Fields}}
+	{{.Name}} geq.Expr{{end}}
+}
+func (m *{{.Name}}) FieldPtrs(r *{{.RowName}}) []any {
+	return []any{ {{range .Fields}} &r.{{.Name}}, {{end}} }
+}
+func (m *{{.Name}}) Selections() []geq.Selection {
+	return []geq.Selection{ {{range .Fields}} m.{{.Name}}, {{end}} }
+}
+
+{{end}}
 `

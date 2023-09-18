@@ -13,3 +13,8 @@ type GeqRelationships struct {
 		Author mdl.User `geq:"Posts.AuthorID = Users.ID"`
 	}
 }
+
+type GeqMappers struct {
+	PostStats        mdl.PostStat
+	TransactionStats mdl.TransactionStat
+}
