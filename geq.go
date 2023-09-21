@@ -102,6 +102,7 @@ func Avg(expr Expr) AnonExpr {
 	return Func("AVG", expr)
 }
 
+// XXX: should accept []any?
 func Coalesce(exprs ...Expr) AnonExpr {
 	vals := make([]any, 0, len(exprs))
 	for _, e := range exprs {
