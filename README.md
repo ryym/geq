@@ -6,8 +6,8 @@ Yet another SQL query builder for Go, with moderate type safety powered by gener
 
 ## Features
 
-- SQL friendly
-- Performative (No runtime reflections)
+- SQL friendly query builder (not ORM)
+- Performative (no runtime reflections)
 
 Unsupported:
 
@@ -16,25 +16,14 @@ Unsupported:
 
 ## Quick start
 
-### Hello, world
+### Hello world
 
-Geq generates a query builder package based on a file named `geqbld.go` .
-With just an empty file, You can try building queries even without an actual database.
+As a first step, you can try using Geq without any database or code generation.
 
 ```bash
-# Install CLI.
-go install github.com/ryym/geq/cmd/geq@latest
-
-# Set up the sample package.
 mkdir geqsample && cd geqsample
 go mod init example.com/geqsample
-
-# Generate the query builder (in ./b by default).
-echo 'package main' > geqbld.go
-geq .
-
-go mod tidy
-touch main.go
+go get github.com/ryym/geq
 ```
 
 `main.go`:
@@ -43,28 +32,29 @@ touch main.go
 package main
 
 import (
-    "fmt"
+	"fmt"
 
-    "example.com/geqsample/b"
+	"github.com/ryym/geq"
 )
 
 func main() {
-   q := b.Select(b.Raw("*")).From(b.Raw("users")).Where(b.Raw("id").Eq(1))
-   sql, err := q.Build()
-   fmt.Println(sql.Query, sql.Args, err)
+	q := geq.Select(geq.Raw("*")).From(geq.Raw("users")).Where(geq.Raw("name").Eq("foo"))
+	sql, err := q.Build()
+	fmt.Println(sql.Query, sql.Args, err)
 }
 ```
 
 ```bash
 % go run .
-SELECT * FROM users WHERE id = ? [1] <nil>
+SELECT * FROM users WHERE name = ? [foo] <nil>
 ```
 
-This may be sufficient for using it as a query builder, but defining a data model will make it more convenient and safe for writing queries.
+This may be somewat useful already, but defining a data model makes it more convenient and safe for writing queries.
 
 ### Define data model
 
 Define a struct that corresponds to records in your database tables, and write it in `geqbld.go` .
+This is a configuration file for Geq.
 
 `mdl/models.go`:
 
@@ -90,16 +80,23 @@ type GeqTables struct {
 ```
 
 ```bash
-# Re-generate your query builder.
+go install github.com/ryym/geq/cmd/geq@latest
 geq .
 ```
 
+The above command generates a query helper package in `./d` by default.
 Now you can rewrite the query in `main.go` like this:
 
 ```diff
+  import (
+  	"fmt"
+  
++ 	"example.com/geqsample/d"
+  	"github.com/ryym/geq"
+  )
  func main() {
--	q := b.Select(b.Raw("*")).From(b.Raw("users")).Where(b.Raw("id").Eq(1))
-+	q := b.SelectFrom(b.Users).Where(b.Users.ID.Eq(1))
+-	q := geq.Select(geq.Raw("*")).From(geq.Raw("users")).Where(geq.Raw("name").Eq("foo"))
++	q := geq.SelectFrom(d.Users).Where(d.Users.Name.Eq("foo"))
  	sql, err := q.Build()
  	fmt.Println(sql.Query, sql.Args, err)
  }
@@ -107,12 +104,13 @@ Now you can rewrite the query in `main.go` like this:
 
 ```bash
 % go run .
-SELECT users.id, users.name FROM users WHERE users.id = ? [1] <nil>
+SELECT users.id, users.name FROM users WHERE users.name = ? ["foo"] <nil>
 ```
 
 ### Run query
 
-Once you have a database corresponding to the definitions in `geqbld.go` , you can actually execute queries and retrieve records.
+Finally you can actually execute the query and retrieve records once you have a database corresponding to the definitions in `geqbld.go` .
+Let's try it with PostgreSQL.
 
 `docker-compose.yml`:
 
@@ -138,7 +136,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"example.com/geqsample/b"
+	"example.com/geqsample/d"
 	_ "github.com/lib/pq"
 	"github.com/ryym/geq"
 )
@@ -167,7 +165,7 @@ func main() {
 	geq.SetDefaultDialect(&geq.DialectPostgres{})
 
 	// Write a query.
-	q := b.SelectFrom(b.Users).Where(b.Users.Name.Eq("foo")).OrderBy(b.Users.ID)
+	q := geq.SelectFrom(d.Users).Where(d.Users.Name.Eq("foo")).OrderBy(d.Users.ID)
 
 	// Load the data.
 	users, err := q.Load(context.Background(), db)
@@ -189,7 +187,7 @@ func main() {
 
 ## Table relationships management
 
-You can define and utilize table relationships.
+Optionally you can define and utilize table relationships.
 
 `mdl/models.go`:
 
@@ -248,14 +246,14 @@ INSERT INTO posts (id, author_id, title) VALUES
 `
 ```
 
-The relationships are used to build join queries or relevant data loading.
+The relationship definitions make it easier to build join queries or load relevant data.
 
 ```go
 // Use in table join.
-_, _ = b.SelectFrom(b.Users).Joins(b.Users.Posts).Where(b.Posts.Title.Eq("")).Build()
+_, _ = geq.SelectFrom(b.Users).Joins(b.Users.Posts).Where(b.Posts.Title.Eq("")).Build()
 
 // Use in data loading.
-posts, err := b.SelectFrom(b.Posts).Where(b.Posts.Author.In(users)).Load(ctx, db)
+posts, err := geq.SelectFrom(b.Posts).Where(b.Posts.Author.In(users)).Load(ctx, db)
 fmt.Println(posts, err)
 ```
 
@@ -277,26 +275,34 @@ Instead, you can load relevant records in two ways:
 #### Load individually
 
 ```go
-users, err := b.SelectFrom(b.Users).OrderBy(b.Users.ID).Limit(50).Load(ctx, db)
-postsMap, err := b.AsSliceMap(
+users, err := geq.SelectFrom(b.Users).OrderBy(b.Users.ID).Limit(50).Load(ctx, db)
+postsMap, err := geq.AsSliceMap(
     b.Posts.ID,
-    b.SelectFrom(b.Posts).Where(b.Posts.Author.In(users)).OrderBy(b.Posts.ID).Load(ctx, db),
+    geq.SelectFrom(b.Posts).Where(b.Posts.Author.In(users)).OrderBy(b.Posts.ID).Load(ctx, db),
 ).Load(ctx, db)
+
+for _, u := range users {
+    fmt.Println(u, postsMap[u.ID])
+}
 ```
 
 - It requires multiple round-trips to the database.
 - It retrieves records without duplicate due to table joining.
 
-#### Load by one query using joins
+#### Load by one query
 
 ```go
 var users []mdl.User
 var postsMap map[uint64][]mdl.Post
-q := b.SelectFrom(b.Users).Joins(b.Users.Posts).OrderBy(b.Users.ID, b.Posts.ID)
+q := geq.SelectFrom(b.Users).Joins(b.Users.Posts).OrderBy(b.Users.ID, b.Posts.ID)
 err := q.WillScan(
-    b.ToSlice(b.Users, &users),
-    b.ToSliceMap(b.Posts, b.Posts.AuthorID, &postsMap),
+    geq.ToSlice(b.Users, &users),
+    geq.ToSliceMap(b.Posts, b.Posts.AuthorID, &postsMap),
 ).Load(ctx, db)
+
+for _, u := range users {
+    fmt.Println(u, postsMap[u.ID])
+}
 ```
 
 - It requires only one round-trip to the database.
@@ -328,14 +334,14 @@ type GeqMappers struct {
 ```
 
 ```bash
-# Re-generate your query builder with row mappers.
+# Re-generate your query helper with row mappers.
 geq .
 ```
 
 Then you can load results into `mdl.PostStat` .
 
 ```go
-q := b.SelectAs(&b.PostStats{
+q := geq.SelectAs(&b.PostStats{
 	AuthorID: b.Posts.AuthorID,
 	PostCount: b.Count(b.Posts.ID),
 }).From(b.Posts).GroupBy(b.Posts.AuthorID)
@@ -346,10 +352,10 @@ Or you can select single values:
 
 ```go
 // userIDs: []uint64
-userIDs, err := b.SelectOnly(b.Users.ID).OrderBy(b.Users.ID).Load(ctx, db)
+userIDs, err := geq.SelectOnly(b.Users.ID).OrderBy(b.Users.ID).Load(ctx, db)
 
 // Currently non-column expressions are not supported.
-// _, _ = b.SelectOnly(b.Count(b.Users.ID)).From(b.Users)
+// _, _ = geq.SelectOnly(geq.Count(b.Users.ID)).From(b.Users)
 ```
 
 ----
