@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/ryym/geq"
-	"github.com/ryym/geq/examples/helloworld/gen/b"
+	"github.com/ryym/geq/examples/helloworld/gen/d"
 	"github.com/ryym/geq/examples/helloworld/reports"
 )
 
 func main() {
 	fmt.Println("helloworld")
 
-	q := geq.SelectFrom(b.Users).OrderBy(b.Users.ID)
+	q := geq.SelectFrom(d.Users).OrderBy(d.Users.ID)
 	// users, err := q.Load(ctx, db)
 	bq, err := q.Build()
 	if err != nil {

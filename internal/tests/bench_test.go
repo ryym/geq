@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ryym/geq"
-	"github.com/ryym/geq/internal/tests/b"
+	"github.com/ryym/geq/internal/tests/d"
 	"github.com/ryym/geq/internal/tests/mdl"
 )
 
@@ -27,28 +27,28 @@ func insertTransactions(db *sql.DB) (err error) {
 	_, err = db.Exec(sb.String())
 	return err
 }
-func clearTransactions(db *sql.DB, tb *testing.B) {
+func clearTransactions(db *sql.DB, b *testing.B) {
 	_, err := db.Exec("TRUNCATE TABLE transactions")
 	if err != nil {
-		tb.Fatalf("failed to clear transactions: %v", err)
+		b.Fatalf("failed to clear transactions: %v", err)
 	}
 }
 
-func BenchmarkSql(tb *testing.B) {
+func BenchmarkSql(b *testing.B) {
 	db, err := sql.Open("mysql", benchDBSrc)
 	if err != nil {
-		tb.Fatal(err)
+		b.Fatal(err)
 	}
 	defer db.Close()
 
 	insertTransactions(db)
-	defer clearTransactions(db, tb)
+	defer clearTransactions(db, b)
 
-	tb.ResetTimer()
-	for i := 0; i < tb.N; i++ {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
 		rows, err := db.Query("SELECT * FROM transactions ORDER BY id LIMIT 100")
 		if err != nil {
-			tb.Fatal(err)
+			b.Fatal(err)
 		}
 		var ts []mdl.Transaction
 		for rows.Next() {
@@ -57,32 +57,32 @@ func BenchmarkSql(tb *testing.B) {
 			ts = append(ts, t)
 		}
 		if len(ts) < 100 {
-			tb.Error("unexpected transaction records")
+			b.Error("unexpected transaction records")
 		}
 	}
 }
 
-func BenchmarkGeq(tb *testing.B) {
+func BenchmarkGeq(b *testing.B) {
 	db, err := sql.Open("mysql", benchDBSrc)
 	if err != nil {
-		tb.Fatal(err)
+		b.Fatal(err)
 	}
 	defer db.Close()
 
 	insertTransactions(db)
-	defer clearTransactions(db, tb)
+	defer clearTransactions(db, b)
 
 	ctx := context.Background()
 
-	tb.ResetTimer()
-	for i := 0; i < tb.N; i++ {
-		q := geq.SelectFrom(b.Transactions).OrderBy(b.Transactions.ID).Limit(100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		q := geq.SelectFrom(d.Transactions).OrderBy(d.Transactions.ID).Limit(100)
 		ts, err := q.Load(ctx, db)
 		if err != nil {
-			tb.Fatal(err)
+			b.Fatal(err)
 		}
 		if len(ts) < 100 {
-			tb.Error("unexpected transaction records")
+			b.Error("unexpected transaction records")
 		}
 	}
 }

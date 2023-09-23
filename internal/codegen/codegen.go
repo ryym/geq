@@ -170,7 +170,7 @@ func parseBuilderConfig(pkg *packages.Package) (cfg *builderConfig, err error) {
 	}
 	outdir, ok := m["geq:outdir"]
 	if !ok {
-		outdir = "./b"
+		outdir = "./d"
 	}
 	if strings.Contains(outdir, "..") {
 		return nil, fmt.Errorf("geq:outdir must not contain '..'")
