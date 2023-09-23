@@ -1,6 +1,6 @@
 package tests
 
-import "github.com/ryym/geq/tests/mdl"
+import "github.com/ryym/geq/internal/tests/mdl"
 
 type GeqTables struct {
 	Users        mdl.User

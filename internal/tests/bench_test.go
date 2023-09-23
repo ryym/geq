@@ -9,8 +9,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ryym/geq"
-	"github.com/ryym/geq/tests/b"
-	"github.com/ryym/geq/tests/mdl"
+	"github.com/ryym/geq/internal/tests/b"
+	"github.com/ryym/geq/internal/tests/mdl"
 )
 
 var benchDBSrc = "root:root@tcp(:3990)/geq?parseTime=true"

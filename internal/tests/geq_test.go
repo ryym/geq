@@ -11,8 +11,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	_ "github.com/lib/pq"
 	"github.com/ryym/geq"
-	"github.com/ryym/geq/tests/b"
-	"github.com/ryym/geq/tests/mdl"
+	"github.com/ryym/geq/internal/tests/b"
+	"github.com/ryym/geq/internal/tests/mdl"
 )
 
 const initMySQL = `

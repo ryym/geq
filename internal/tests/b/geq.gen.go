@@ -5,7 +5,7 @@ package b
 
 import (
 	"github.com/ryym/geq"
-	"github.com/ryym/geq/tests/mdl"
+	"github.com/ryym/geq/internal/tests/mdl"
 	"time"
 )
 

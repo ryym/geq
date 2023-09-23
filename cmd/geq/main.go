@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ryym/geq/codegen"
+	"github.com/ryym/geq/internal/codegen"
 )
 
 func main() {

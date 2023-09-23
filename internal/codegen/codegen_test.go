@@ -16,7 +16,7 @@ func TestCodegenHelloworld(t *testing.T) {
 		t.Fatal("failed to acquire current file path")
 	}
 
-	relpath, err := filepath.Rel(filepath.Base(file), "./examples/helloworld")
+	relpath, err := filepath.Rel(filepath.Base(file), "../examples/helloworld")
 	if err != nil {
 		t.Fatalf("failed to compute examples path: %v", err)
 	}
