@@ -62,7 +62,6 @@ func Update(table AnyTable) *UpdateQuery {
 	return newUpdateQuery(table)
 }
 
-// XXX: necessary?
 func Null() AnonExpr {
 	return implOps(&nullExpr{})
 }
