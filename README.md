@@ -6,7 +6,7 @@ Yet another SQL query builder for Go, with moderate type safety powered by gener
 
 ## Features
 
-- SQL friendly query builder (not ORM)
+- SQL friendly (query builder rather than ORM)
 - Performative (no runtime reflections)
 
 Unsupported:
@@ -23,7 +23,6 @@ As a first step, you can try using Geq without any database or code generation.
 ```bash
 mkdir geqsample && cd geqsample
 go mod init example.com/geqsample
-go get github.com/ryym/geq
 ```
 
 `main.go`:
@@ -45,6 +44,7 @@ func main() {
 ```
 
 ```bash
+% go mod tidy
 % go run .
 SELECT * FROM users WHERE name = ? [foo] <nil>
 ```
@@ -56,17 +56,6 @@ This may be somewat useful already, but defining a data model makes it more conv
 Define a struct that corresponds to records in your database tables, and write it in `geqbld.go` .
 This is a configuration file for Geq.
 
-`mdl/models.go`:
-
-```go
-package mdl
-
-type User struct {
-    ID   uint64
-    Name string
-}
-```
-
 `geqbld.go`:
 
 ```go
@@ -76,6 +65,17 @@ import "example.com/geqsample/mdl"
 
 type GeqTables struct {
 	Users mdl.User
+}
+```
+
+`mdl/models.go`:
+
+```go
+package mdl
+
+type User struct {
+    ID   uint64
+    Name string
 }
 ```
 
@@ -234,11 +234,10 @@ The relationship definitions make it easier to build join queries or load releva
 
 ```go
 // Use in table join.
-_, _ = geq.SelectFrom(d.Users).Joins(d.Users.Posts).Where(d.Posts.Title.Eq("")).Build()
+geq.SelectFrom(d.Users).Joins(d.Users.Posts).Where(d.Posts.Title.Eq(""))
 
 // Use in data loading.
-posts, err := geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).Load(ctx, db)
-fmt.Println(posts, err)
+geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users))
 ```
 
 ### Relevant models retrieval
@@ -259,16 +258,17 @@ Instead, you can load relevant records in two ways:
 #### Load by one query
 
 ```go
-var users []mdl.User
-var postsMap map[uint64][]mdl.Post
-q := geq.SelectFrom(d.Users).Joins(d.Users.Posts).OrderBy(d.Users.ID, d.Posts.ID)
-err := q.WillScan(
-    geq.ToSlice(d.Users, &users),
-    geq.ToSliceMap(d.Posts, d.Posts.AuthorID, &postsMap),
+var posts []mdl.Post
+var userMap map[int64]mdl.User
+q := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID)
+err = q.WillScan(
+	geq.ToSlice(d.Posts, &posts),
+	geq.ToMap(d.Users, d.Users.ID, &userMap),
 ).Load(ctx, db)
 
-for _, u := range users {
-    fmt.Println(u, postsMap[u.ID])
+for _, p := range posts {
+	author := userMap[p.AuthorID]
+	fmt.Println(p, author)
 }
 ```
 
@@ -280,12 +280,13 @@ for _, u := range users {
 ```go
 users, err := geq.SelectFrom(d.Users).OrderBy(d.Users.ID).Limit(50).Load(ctx, db)
 postsMap, err := geq.AsSliceMap(
-    d.Posts.ID,
-    geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).OrderBy(d.Posts.ID).Load(ctx, db),
+	d.Posts.ID,
+	geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).OrderBy(d.Posts.ID),
 ).Load(ctx, db)
 
 for _, u := range users {
-    fmt.Println(u, postsMap[u.ID])
+	posts := postsMap[u.ID]
+	fmt.Println(u, posts)
 }
 ```
 
@@ -338,9 +339,6 @@ Or when you want to select single values, use `SelectOnly` .
 ```go
 // userIDs: []uint64
 userIDs, err := geq.SelectOnly(d.Users.ID).OrderBy(d.Users.ID).Load(ctx, db)
-
-// Currently non-column expressions are not supported.
-// _, _ = geq.SelectOnly(geq.Count(d.Users.ID)).From(d.Users)
 ```
 
 ## Result mapping patterns
@@ -364,7 +362,7 @@ fmt.Printf("%#+v\n", userMap)
 ### `AsSliceMap(key, query).Load` - Load as map of slices
 
 ```go
-usersMap, err := geq.AsSliceMap(d.Users.ID, geq.SelectFrom(d.Users)).Load(ctx, db)
+usersMap, err := geq.AsSliceMap(d.Users.Name, geq.SelectFrom(d.Users)).Load(ctx, db)
 fmt.Printf("%#+v\n", usersMap)
 //=> map[string][]mdl.User{"bar":[]mdl.User{mdl.User{ID:0x2, Name:"bar"}}, "foo":[]mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x3, Name:"foo"}}}
 ```
@@ -372,9 +370,7 @@ fmt.Printf("%#+v\n", usersMap)
 ### `LoadRows` - Load as `*sql.Rows`
 
 ```go
-rows, err := geq.SelectFrom(d.Users).OrderBy(d.Users.ID).LoadRows(ctx, db)
-
-rows, err = geq.Select(d.Users.ID, geq.Coalesce(d.Users.Name, "")).From(d.Users).LoadRows(ctx, db)
+rows, err = geq.SelectFrom(d.Users).LoadRows(ctx, db)
 ```
 
 ### `WillScan(scans...).Load` - Scan into multiple results
@@ -426,4 +422,16 @@ posts, err := geq.SelectVia(users, d.Posts, d.Posts.Author).Load(ctx, db)
 
 // The above query is a shorthand of this query:
 posts, err := geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).Load(ctx, db)
+```
+
+### `Select` - Select arbitrary values
+
+```go
+// Mainly used for sub queries.
+geq.SelectAs(&d.Hoge{
+    AuthorName: d.Users.Name,
+    IsPro: geq.Exists(geq.Select().From(d.Prof))
+}).From(d.Users).Where(
+    d.Users.ID.InAny(geq.Select(d.Posts.AuthorID).From(d.Posts)),
+).GroupBy(d.Users.Name)
 ```
