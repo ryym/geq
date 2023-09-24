@@ -88,7 +88,7 @@ type TypedSelection[F any] interface {
 }
 
 type AnyRelship interface {
-	RightTableName() string
+	TableLike
 	JoinColumns() (left Expr, right Expr)
 }
 
@@ -108,6 +108,10 @@ func (r *Relship[T, R, C]) Selections() []Selection {
 
 func (r *Relship[T, R, C]) FieldPtrs(row *R) []any {
 	return r.tableR.FieldPtrs(row)
+}
+
+func (r *Relship[T, R, C]) appendTable(w *queryWriter, cfg *QueryConfig) {
+	r.tableR.appendTable(w, cfg)
 }
 
 func (r *Relship[T, R, C]) T() T {
@@ -230,7 +234,9 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 
 	if len(q.innerJoins) > 0 {
 		for _, r := range q.innerJoins {
-			w.Printf(" INNER JOIN %s ON ", cfg.dialect.Ident(r.RightTableName()))
+			w.Write(" INNER JOIN ")
+			r.appendTable(w, cfg)
+			w.Write(" ON ")
 			colL, colR := r.JoinColumns()
 			colL.appendExpr(w, cfg)
 			w.Write(" = ")
