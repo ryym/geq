@@ -157,6 +157,7 @@ type BuiltQuery struct {
 type Query[R any] struct {
 	ops
 	mapper     RowMapper[R]
+	distinct   bool
 	selections []Selection
 	from       TableLike
 	innerJoins []AnyRelship // For now.
@@ -175,6 +176,11 @@ func newQuery[R any](mapper RowMapper[R]) *Query[R] {
 
 func (q *Query[R]) As(alias string) *QueryTable[R] {
 	return &QueryTable[R]{query: q, alias: alias}
+}
+
+func (q *Query[R]) Distinct() *Query[R] {
+	q.distinct = true
+	return q
 }
 
 func (q *Query[R]) From(table TableLike) *Query[R] {
@@ -216,6 +222,9 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	w := newQueryWriter()
 
 	w.Write("SELECT ")
+	if q.distinct {
+		w.Write("DISTINCT ")
+	}
 	for i, sel := range q.selections {
 		if i > 0 {
 			w.Write(", ")

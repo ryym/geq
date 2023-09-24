@@ -578,6 +578,22 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "select distinct",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectOnly(d.Posts.AuthorID).Distinct().From(d.Posts).OrderBy(d.Posts.AuthorID)
+				err = assertQuery(q, "SELECT DISTINCT posts.author_id FROM posts ORDER BY posts.author_id")
+				if err != nil {
+					return err
+				}
+				authorIDs, err := q.Load(ctx, db)
+				err = assertEqual(authorIDs, []int64{1, 2, 3})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select with grouping",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.SelectFrom(d.Users, d.Users.Name, geq.Max(d.Users.ID)).GroupBy(d.Users.Name)
