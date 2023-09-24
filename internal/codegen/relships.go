@@ -27,10 +27,10 @@ func parseRelationships(pkg *packages.Package, cfg *builderConfig, tables []tabl
 	relsMap = make(map[string][]*relshipDef, 0)
 	for i := 0; i < relStruct.NumFields(); i++ {
 		field := relStruct.Field(i)
-		mapperL := field.Name()
+		mapperLName := field.Name()
 		fieldStruct, ok := field.Type().(*types.Struct)
 		if !ok {
-			return nil, fmt.Errorf("type of field of GeqRelationships %s must be unnamed struct", mapperL)
+			return nil, fmt.Errorf("type of field of GeqRelationships %s must be unnamed struct", mapperLName)
 		}
 		for j := 0; j < fieldStruct.NumFields(); j++ {
 			f := fieldStruct.Field(j)
@@ -38,7 +38,7 @@ func parseRelationships(pkg *packages.Package, cfg *builderConfig, tables []tabl
 
 			ft, ok := f.Type().(*types.Named)
 			if !ok {
-				return nil, fmt.Errorf("type of field of GeqRelationships %s.%s must be named struct", mapperL, f.Name())
+				return nil, fmt.Errorf("type of field of GeqRelationships %s.%s must be named struct", mapperLName, f.Name())
 			}
 
 			var rowType string
@@ -63,25 +63,24 @@ func parseRelationships(pkg *packages.Package, cfg *builderConfig, tables []tabl
 			fParts2 := strings.SplitN(relParts[1], ".", 2)
 
 			rs := &relshipDef{
-				MapperL:  mapperL,
-				MapperR:  mapperR.Name,
+				MapperR:  mapperR,
 				RowNameR: mapperR.RowName,
 				RelName:  relName,
 				FieldL:   fParts1[1],
 				FieldR:   fParts2[1],
 			}
-			relsMap[mapperL] = append(relsMap[mapperL], rs)
+			relsMap[mapperLName] = append(relsMap[mapperLName], rs)
 
 			var ftL, ftR string
 			for _, t := range tables {
 				switch t.Name {
-				case rs.MapperL:
+				case mapperLName:
 					for _, f := range t.Fields {
 						if f.Name == rs.FieldL {
 							ftL = f.Type
 						}
 					}
-				case rs.MapperR:
+				case rs.MapperR.Name:
 					for _, f := range t.Fields {
 						if f.Name == rs.FieldR {
 							ftR = f.Type

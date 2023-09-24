@@ -53,7 +53,6 @@ type builderFileDef struct {
 	PkgName    string
 	Imports    []string
 	Tables     []tableDef
-	Relships   []*relshipDef
 	RowMappers []rowMapperDef
 }
 
@@ -72,8 +71,7 @@ type tableFieldDef struct {
 }
 
 type relshipDef struct {
-	MapperL   string
-	MapperR   string
+	MapperR   *tableDef
 	RowNameR  string
 	RelName   string
 	FieldL    string
@@ -140,12 +138,9 @@ func buildBuilderFileDef(pkg *packages.Package, cfg *builderConfig) (def *builde
 	if err != nil {
 		return nil, err
 	}
-
-	rels := make([]*relshipDef, 0)
 	for i := range tables {
 		rs := relsMap[tables[i].Name]
 		tables[i].Relships = rs
-		rels = append(rels, rs...)
 	}
 
 	mappers, err := parseRowMappers(pkg, cfg, imports)
@@ -157,7 +152,6 @@ func buildBuilderFileDef(pkg *packages.Package, cfg *builderConfig) (def *builde
 		PkgName:    cfg.outPkgName,
 		Imports:    mapKeys(imports),
 		Tables:     tables,
-		Relships:   rels,
 		RowMappers: mappers,
 	}
 	return def, nil
@@ -207,8 +201,8 @@ var {{.Name}} = New{{.Name}}("{{.DbName}}")
 {{end}}
 
 func init() {
-	{{range .Relships -}}
-	{{.MapperL}}.{{.RelName}} = geq.NewRelship({{.MapperR}}, {{.MapperL}}.{{.FieldL}}, {{.MapperR}}.{{.FieldR}})
+	{{range .Tables -}}
+	{{.Name}}.InitRelships()
 	{{end -}}
 }
 
@@ -219,7 +213,7 @@ type Table{{.Name}} struct {
 	{{.Name}} *geq.Column[{{.Type}}]
 	{{end -}}
 	{{range .Relships -}}
-	{{.RelName}} *geq.Relship[*Table{{.MapperR}}, {{.RowNameR}}, {{.FieldType}}]
+	{{.RelName}} *geq.Relship[*Table{{.MapperR.Name}}, {{.RowNameR}}, {{.FieldType}}]
 	{{end -}}
 }
 
@@ -233,6 +227,15 @@ func New{{.Name}}(alias string) *Table{{.Name}} {
 	sels := []geq.Selection{ {{- range .Fields}} t.{{.Name}}, {{end -}} }
 	t.TableBase = geq.NewTableBase("{{.DbName}}", alias, columns, sels)
 	return t
+}
+
+func (t *Table{{.Name}}) InitRelships()  {
+	{{range .Relships -}}
+	func() {
+		r := New{{.MapperR.Name}}("{{.MapperR.DbName}}")
+		t.{{.RelName}} = geq.NewRelship(r, t.{{.FieldL}}, r.{{.FieldR}})
+	}()
+	{{end -}}
 }
 func (t *Table{{.Name}}) FieldPtrs(r *{{.RowName}}) []any {
 	return []any{ {{- range .Fields}} &r.{{.Name}}, {{end -}} }

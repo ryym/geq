@@ -14,8 +14,10 @@ var Countries = NewCountries("countries")
 var Cities = NewCities("cities")
 
 func init() {
-	Users.Posts = geq.NewRelship(Posts, Users.ID, Posts.AuthorID)
-	Posts.Author = geq.NewRelship(Users, Posts.AuthorID, Users.ID)
+	Users.InitRelships()
+	Posts.InitRelships()
+	Countries.InitRelships()
+	Cities.InitRelships()
 }
 
 type TableUsers struct {
@@ -34,6 +36,13 @@ func NewUsers(alias string) *TableUsers {
 	sels := []geq.Selection{t.ID, t.Name}
 	t.TableBase = geq.NewTableBase("users", alias, columns, sels)
 	return t
+}
+
+func (t *TableUsers) InitRelships() {
+	func() {
+		r := NewPosts("posts")
+		t.Posts = geq.NewRelship(r, t.ID, r.AuthorID)
+	}()
 }
 func (t *TableUsers) FieldPtrs(r *mdl.User) []any {
 	return []any{&r.ID, &r.Name}
@@ -63,6 +72,13 @@ func NewPosts(alias string) *TablePosts {
 	t.TableBase = geq.NewTableBase("posts", alias, columns, sels)
 	return t
 }
+
+func (t *TablePosts) InitRelships() {
+	func() {
+		r := NewUsers("users")
+		t.Author = geq.NewRelship(r, t.AuthorID, r.ID)
+	}()
+}
 func (t *TablePosts) FieldPtrs(r *mdl.Post) []any {
 	return []any{&r.ID, &r.Title, &r.AuthorID, &r.Published}
 }
@@ -85,6 +101,9 @@ func NewCountries(alias string) *TableCountries {
 	sels := []geq.Selection{t.ID, t.Name}
 	t.TableBase = geq.NewTableBase("countries", alias, columns, sels)
 	return t
+}
+
+func (t *TableCountries) InitRelships() {
 }
 func (t *TableCountries) FieldPtrs(r *mdl.Country) []any {
 	return []any{&r.ID, &r.Name}
@@ -110,6 +129,9 @@ func NewCities(alias string) *TableCities {
 	sels := []geq.Selection{t.ID, t.Name, t.CountryID}
 	t.TableBase = geq.NewTableBase("cities", alias, columns, sels)
 	return t
+}
+
+func (t *TableCities) InitRelships() {
 }
 func (t *TableCities) FieldPtrs(r *mdl.City) []any {
 	return []any{&r.ID, &r.Name, &r.CountryID}

@@ -14,7 +14,9 @@ var Posts = NewPosts("posts")
 var Transactions = NewTransactions("transactions")
 
 func init() {
-	Posts.Author = geq.NewRelship(Users, Posts.AuthorID, Users.ID)
+	Users.InitRelships()
+	Posts.InitRelships()
+	Transactions.InitRelships()
 }
 
 type TableUsers struct {
@@ -32,6 +34,9 @@ func NewUsers(alias string) *TableUsers {
 	sels := []geq.Selection{t.ID, t.Name}
 	t.TableBase = geq.NewTableBase("users", alias, columns, sels)
 	return t
+}
+
+func (t *TableUsers) InitRelships() {
 }
 func (t *TableUsers) FieldPtrs(r *mdl.User) []any {
 	return []any{&r.ID, &r.Name}
@@ -58,6 +63,13 @@ func NewPosts(alias string) *TablePosts {
 	sels := []geq.Selection{t.ID, t.AuthorID, t.Title}
 	t.TableBase = geq.NewTableBase("posts", alias, columns, sels)
 	return t
+}
+
+func (t *TablePosts) InitRelships() {
+	func() {
+		r := NewUsers("users")
+		t.Author = geq.NewRelship(r, t.AuthorID, r.ID)
+	}()
 }
 func (t *TablePosts) FieldPtrs(r *mdl.Post) []any {
 	return []any{&r.ID, &r.AuthorID, &r.Title}
@@ -87,6 +99,9 @@ func NewTransactions(alias string) *TableTransactions {
 	sels := []geq.Selection{t.ID, t.UserID, t.Amount, t.Description, t.CreatedAt}
 	t.TableBase = geq.NewTableBase("transactions", alias, columns, sels)
 	return t
+}
+
+func (t *TableTransactions) InitRelships() {
 }
 func (t *TableTransactions) FieldPtrs(r *mdl.Transaction) []any {
 	return []any{&r.ID, &r.UserID, &r.Amount, &r.Description, &r.CreatedAt}
