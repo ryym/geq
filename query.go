@@ -91,25 +91,25 @@ type AnyRelship interface {
 	JoinColumns() (left Expr, right Expr)
 }
 
-type Relship[R, C any] struct {
-	tableR Table[R]
+type Relship[T Table[R], R, C any] struct {
+	tableR T
 	colL   *Column[C]
 	colR   *Column[C]
 }
 
-func NewRelship[R, C any](tableR Table[R], colL, colR *Column[C]) *Relship[R, C] {
-	return &Relship[R, C]{tableR: tableR, colL: colL, colR: colR}
+func NewRelship[T Table[R], R, C any](tableR T, colL, colR *Column[C]) *Relship[T, R, C] {
+	return &Relship[T, R, C]{tableR: tableR, colL: colL, colR: colR}
 }
 
-func (r *Relship[R, C]) RightTableName() string {
+func (r *Relship[T, R, C]) RightTableName() string {
 	return r.tableR.TableName()
 }
 
-func (r *Relship[R, C]) JoinColumns() (left Expr, right Expr) {
+func (r *Relship[T, R, C]) JoinColumns() (left Expr, right Expr) {
 	return r.colL, r.colR
 }
 
-func (r *Relship[R, C]) In(recs []R) Expr {
+func (r *Relship[T, R, C]) In(recs []R) Expr {
 	sels := r.tableR.Selections()
 	colIdx := selectionIndex(sels[0], sels, r.colR)
 	if colIdx < 0 {

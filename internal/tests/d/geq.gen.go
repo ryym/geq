@@ -45,7 +45,7 @@ type TablePosts struct {
 	ID       *geq.Column[int64]
 	AuthorID *geq.Column[int64]
 	Title    *geq.Column[string]
-	Author   *geq.Relship[mdl.User, int64]
+	Author   *geq.Relship[*TableUsers, mdl.User, int64]
 }
 
 func NewPosts(alias string) *TablePosts {

@@ -219,7 +219,7 @@ type Table{{.Name}} struct {
 	{{.Name}} *geq.Column[{{.Type}}]
 	{{end -}}
 	{{range .Relships -}}
-	{{.RelName}} *geq.Relship[{{.RowNameR}}, {{.FieldType}}]
+	{{.RelName}} *geq.Relship[*Table{{.MapperR}}, {{.RowNameR}}, {{.FieldType}}]
 	{{end -}}
 }
 

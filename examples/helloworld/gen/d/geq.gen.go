@@ -22,7 +22,7 @@ type TableUsers struct {
 	*geq.TableBase
 	ID    *geq.Column[uint64]
 	Name  *geq.Column[string]
-	Posts *geq.Relship[mdl.Post, uint64]
+	Posts *geq.Relship[*TablePosts, mdl.Post, uint64]
 }
 
 func NewUsers(alias string) *TableUsers {
@@ -48,7 +48,7 @@ type TablePosts struct {
 	Title     *geq.Column[string]
 	AuthorID  *geq.Column[uint64]
 	Published *geq.Column[bool]
-	Author    *geq.Relship[mdl.User, uint64]
+	Author    *geq.Relship[*TableUsers, mdl.User, uint64]
 }
 
 func NewPosts(alias string) *TablePosts {

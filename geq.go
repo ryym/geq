@@ -50,7 +50,7 @@ func Select(sels ...Selection) *Query[struct{}] {
 	return q
 }
 
-func SelectVia[S, T, C any](srcs []S, table Table[T], relship *Relship[S, C]) *Query[T] {
+func SelectVia[S, T, C any, RT Table[S]](srcs []S, table Table[T], relship *Relship[RT, S, C]) *Query[T] {
 	return newQuery(table).From(table).Where(relship.In(srcs))
 }
 
