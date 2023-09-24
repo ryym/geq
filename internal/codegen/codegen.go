@@ -203,7 +203,7 @@ import (
 )
 
 {{range .Tables -}}
-var {{.Name}} = New{{.Name}}("")
+var {{.Name}} = New{{.Name}}("{{.DbName}}")
 {{end}}
 
 func init() {
@@ -225,9 +225,8 @@ type Table{{.Name}} struct {
 
 func New{{.Name}}(alias string) *Table{{.Name}} {
 	t := &Table{{.Name}}{
-		{{$dbTable := .DbName}}
-		{{- range .Fields -}}
-		{{.Name}}: geq.NewColumn[{{.Type}}]("{{$dbTable}}", "{{.DbName}}"),
+		{{range .Fields -}}
+		{{.Name}}: geq.NewColumn[{{.Type}}](alias, "{{.DbName}}"),
 		{{end -}}
 	}
 	columns := []geq.AnyColumn{ {{- range .Fields}} t.{{.Name}}, {{end -}} }

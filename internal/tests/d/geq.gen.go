@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-var Users = NewUsers("")
-var Posts = NewPosts("")
-var Transactions = NewTransactions("")
+var Users = NewUsers("users")
+var Posts = NewPosts("posts")
+var Transactions = NewTransactions("transactions")
 
 func init() {
 	Posts.Author = geq.NewRelship(Users, Posts.AuthorID, Users.ID)
@@ -25,8 +25,8 @@ type TableUsers struct {
 
 func NewUsers(alias string) *TableUsers {
 	t := &TableUsers{
-		ID:   geq.NewColumn[int64]("users", "id"),
-		Name: geq.NewColumn[string]("users", "name"),
+		ID:   geq.NewColumn[int64](alias, "id"),
+		Name: geq.NewColumn[string](alias, "name"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.Name}
 	sels := []geq.Selection{t.ID, t.Name}
@@ -50,9 +50,9 @@ type TablePosts struct {
 
 func NewPosts(alias string) *TablePosts {
 	t := &TablePosts{
-		ID:       geq.NewColumn[int64]("posts", "id"),
-		AuthorID: geq.NewColumn[int64]("posts", "author_id"),
-		Title:    geq.NewColumn[string]("posts", "title"),
+		ID:       geq.NewColumn[int64](alias, "id"),
+		AuthorID: geq.NewColumn[int64](alias, "author_id"),
+		Title:    geq.NewColumn[string](alias, "title"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.AuthorID, t.Title}
 	sels := []geq.Selection{t.ID, t.AuthorID, t.Title}
@@ -77,11 +77,11 @@ type TableTransactions struct {
 
 func NewTransactions(alias string) *TableTransactions {
 	t := &TableTransactions{
-		ID:          geq.NewColumn[uint32]("transactions", "id"),
-		UserID:      geq.NewColumn[uint32]("transactions", "user_id"),
-		Amount:      geq.NewColumn[int32]("transactions", "amount"),
-		Description: geq.NewColumn[string]("transactions", "description"),
-		CreatedAt:   geq.NewColumn[time.Time]("transactions", "created_at"),
+		ID:          geq.NewColumn[uint32](alias, "id"),
+		UserID:      geq.NewColumn[uint32](alias, "user_id"),
+		Amount:      geq.NewColumn[int32](alias, "amount"),
+		Description: geq.NewColumn[string](alias, "description"),
+		CreatedAt:   geq.NewColumn[time.Time](alias, "created_at"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.UserID, t.Amount, t.Description, t.CreatedAt}
 	sels := []geq.Selection{t.ID, t.UserID, t.Amount, t.Description, t.CreatedAt}

@@ -46,6 +46,9 @@ type TableBase struct {
 }
 
 func NewTableBase(tableName string, alias string, columns []AnyColumn, sels []Selection) *TableBase {
+	if alias == tableName {
+		alias = ""
+	}
 	return &TableBase{
 		tableName:  tableName,
 		alias:      alias,

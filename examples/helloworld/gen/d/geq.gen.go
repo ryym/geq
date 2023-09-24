@@ -8,10 +8,10 @@ import (
 	"github.com/ryym/geq/examples/helloworld/mdl"
 )
 
-var Users = NewUsers("")
-var Posts = NewPosts("")
-var Countries = NewCountries("")
-var Cities = NewCities("")
+var Users = NewUsers("users")
+var Posts = NewPosts("posts")
+var Countries = NewCountries("countries")
+var Cities = NewCities("cities")
 
 func init() {
 	Users.Posts = geq.NewRelship(Posts, Users.ID, Posts.AuthorID)
@@ -27,8 +27,8 @@ type TableUsers struct {
 
 func NewUsers(alias string) *TableUsers {
 	t := &TableUsers{
-		ID:   geq.NewColumn[uint64]("users", "id"),
-		Name: geq.NewColumn[string]("users", "name"),
+		ID:   geq.NewColumn[uint64](alias, "id"),
+		Name: geq.NewColumn[string](alias, "name"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.Name}
 	sels := []geq.Selection{t.ID, t.Name}
@@ -53,10 +53,10 @@ type TablePosts struct {
 
 func NewPosts(alias string) *TablePosts {
 	t := &TablePosts{
-		ID:        geq.NewColumn[uint64]("posts", "id"),
-		Title:     geq.NewColumn[string]("posts", "title"),
-		AuthorID:  geq.NewColumn[uint64]("posts", "author_id"),
-		Published: geq.NewColumn[bool]("posts", "published"),
+		ID:        geq.NewColumn[uint64](alias, "id"),
+		Title:     geq.NewColumn[string](alias, "title"),
+		AuthorID:  geq.NewColumn[uint64](alias, "author_id"),
+		Published: geq.NewColumn[bool](alias, "published"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.Title, t.AuthorID, t.Published}
 	sels := []geq.Selection{t.ID, t.Title, t.AuthorID, t.Published}
@@ -78,8 +78,8 @@ type TableCountries struct {
 
 func NewCountries(alias string) *TableCountries {
 	t := &TableCountries{
-		ID:   geq.NewColumn[uint32]("countries", "id"),
-		Name: geq.NewColumn[string]("countries", "name"),
+		ID:   geq.NewColumn[uint32](alias, "id"),
+		Name: geq.NewColumn[string](alias, "name"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.Name}
 	sels := []geq.Selection{t.ID, t.Name}
@@ -102,9 +102,9 @@ type TableCities struct {
 
 func NewCities(alias string) *TableCities {
 	t := &TableCities{
-		ID:        geq.NewColumn[uint64]("cities", "id"),
-		Name:      geq.NewColumn[string]("cities", "name"),
-		CountryID: geq.NewColumn[uint32]("cities", "country_id"),
+		ID:        geq.NewColumn[uint64](alias, "id"),
+		Name:      geq.NewColumn[string](alias, "name"),
+		CountryID: geq.NewColumn[uint32](alias, "country_id"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.Name, t.CountryID}
 	sels := []geq.Selection{t.ID, t.Name, t.CountryID}
