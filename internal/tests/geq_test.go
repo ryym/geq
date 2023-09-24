@@ -337,7 +337,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 				q := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID)
 				err = q.WillScan(
 					geq.ToSlice(d.Posts, &posts),
-					geq.ToMap(d.Users, d.Users.ID, &userMap),
+					geq.ToMap(d.Posts.Author, d.Posts.Author.T().ID, &userMap),
 				).Load(ctx, db)
 				if err != nil {
 					return err
@@ -451,7 +451,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 				q := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.AuthorID)
 				err = assertQuery(q, sjoin(
 					"SELECT posts.id, posts.author_id, posts.title FROM posts",
-					"INNER JOIN users ON posts.author_id = users.id",
+					"INNER JOIN users AS posts_users ON posts.author_id = posts_users.id",
 					"ORDER BY posts.author_id",
 				))
 				if err != nil {

@@ -210,6 +210,7 @@ func init() {
 type Table{{.Name}} struct {
 	*geq.TableBase
 	relshipsSet bool
+	alias string
 	{{range .Fields -}}
 	{{.Name}} *geq.Column[{{.Type}}]
 	{{end -}}
@@ -220,6 +221,7 @@ type Table{{.Name}} struct {
 
 func New{{.Name}}(alias string) *Table{{.Name}} {
 	t := &Table{{.Name}}{
+		alias: alias,
 		{{range .Fields -}}
 		{{.Name}}: geq.NewColumn[{{.Type}}](alias, "{{.DbName}}"),
 		{{end -}}
@@ -236,7 +238,7 @@ func (t *Table{{.Name}}) InitRelships()  {
 	}
 	{{range .Relships -}}
 	func() {
-		r := New{{.MapperR.Name}}("{{.MapperR.DbName}}")
+		r := New{{.MapperR.Name}}(t.alias + "_{{.MapperR.DbName}}")
 		t.{{.RelName}} = geq.NewRelship(r, t.{{.FieldL}}, r.{{.FieldR}})
 	}()
 	{{end -}}

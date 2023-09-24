@@ -23,6 +23,7 @@ func init() {
 type TableUsers struct {
 	*geq.TableBase
 	relshipsSet bool
+	alias       string
 	ID          *geq.Column[uint64]
 	Name        *geq.Column[string]
 	Posts       *geq.Relship[*TablePosts, mdl.Post, uint64]
@@ -30,8 +31,9 @@ type TableUsers struct {
 
 func NewUsers(alias string) *TableUsers {
 	t := &TableUsers{
-		ID:   geq.NewColumn[uint64](alias, "id"),
-		Name: geq.NewColumn[string](alias, "name"),
+		alias: alias,
+		ID:    geq.NewColumn[uint64](alias, "id"),
+		Name:  geq.NewColumn[string](alias, "name"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.Name}
 	sels := []geq.Selection{t.ID, t.Name}
@@ -44,7 +46,7 @@ func (t *TableUsers) InitRelships() {
 		return
 	}
 	func() {
-		r := NewPosts("posts")
+		r := NewPosts(t.alias + "_posts")
 		t.Posts = geq.NewRelship(r, t.ID, r.AuthorID)
 	}()
 	t.relshipsSet = true
@@ -59,6 +61,7 @@ func (t *TableUsers) As(alias string) *TableUsers {
 type TablePosts struct {
 	*geq.TableBase
 	relshipsSet bool
+	alias       string
 	ID          *geq.Column[uint64]
 	Title       *geq.Column[string]
 	AuthorID    *geq.Column[uint64]
@@ -68,6 +71,7 @@ type TablePosts struct {
 
 func NewPosts(alias string) *TablePosts {
 	t := &TablePosts{
+		alias:     alias,
 		ID:        geq.NewColumn[uint64](alias, "id"),
 		Title:     geq.NewColumn[string](alias, "title"),
 		AuthorID:  geq.NewColumn[uint64](alias, "author_id"),
@@ -84,7 +88,7 @@ func (t *TablePosts) InitRelships() {
 		return
 	}
 	func() {
-		r := NewUsers("users")
+		r := NewUsers(t.alias + "_users")
 		t.Author = geq.NewRelship(r, t.AuthorID, r.ID)
 	}()
 	t.relshipsSet = true
@@ -99,14 +103,16 @@ func (t *TablePosts) As(alias string) *TablePosts {
 type TableCountries struct {
 	*geq.TableBase
 	relshipsSet bool
+	alias       string
 	ID          *geq.Column[uint32]
 	Name        *geq.Column[string]
 }
 
 func NewCountries(alias string) *TableCountries {
 	t := &TableCountries{
-		ID:   geq.NewColumn[uint32](alias, "id"),
-		Name: geq.NewColumn[string](alias, "name"),
+		alias: alias,
+		ID:    geq.NewColumn[uint32](alias, "id"),
+		Name:  geq.NewColumn[string](alias, "name"),
 	}
 	columns := []geq.AnyColumn{t.ID, t.Name}
 	sels := []geq.Selection{t.ID, t.Name}
@@ -130,6 +136,7 @@ func (t *TableCountries) As(alias string) *TableCountries {
 type TableCities struct {
 	*geq.TableBase
 	relshipsSet bool
+	alias       string
 	ID          *geq.Column[uint64]
 	Name        *geq.Column[string]
 	CountryID   *geq.Column[uint32]
@@ -137,6 +144,7 @@ type TableCities struct {
 
 func NewCities(alias string) *TableCities {
 	t := &TableCities{
+		alias:     alias,
 		ID:        geq.NewColumn[uint64](alias, "id"),
 		Name:      geq.NewColumn[string](alias, "name"),
 		CountryID: geq.NewColumn[uint32](alias, "country_id"),
