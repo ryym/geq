@@ -233,11 +233,11 @@ type GeqRelationships struct {
 The relationship definitions make it easier to build join queries or load relevant data.
 
 ```go
-// Use in table join.
-geq.SelectFrom(d.Users).Joins(d.Users.Posts).Where(d.Posts.Title.Eq(""))
-
 // Use in data loading.
 geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users))
+
+// Use in table join.
+geq.SelectFrom(d.Users).Joins(d.Users.Posts).Where(d.Users.Posts.T().Title.Eq(""))
 ```
 
 ### Relevant models retrieval
@@ -263,7 +263,7 @@ var userMap map[int64]mdl.User
 q := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID)
 err = q.WillScan(
 	geq.ToSlice(d.Posts, &posts),
-	geq.ToMap(d.Users, d.Users.ID, &userMap),
+	geq.ToMap(d.Posts.Author, d.Posts.Author.T().ID, &userMap),
 ).Load(ctx, db)
 
 for _, p := range posts {
@@ -378,10 +378,15 @@ rows, err = geq.SelectFrom(d.Users).LoadRows(ctx, db)
 ```go
 var users []mdl.User
 var postsMap map[uint64][]mdl.Post
-err := geq.SelectFrom(d.Users).Joins(d.Users.Posts).OrderBy(d.Users.ID, d.Posts.ID).WillScan(
-    d.ToSlice(d.Users, &users),
-    d.ToSliceMap(d.Posts, d.Posts.AuthorID, &postsMap),
-).Load(ctx, db)
+err := geq.
+	SelectFrom(d.Users).
+	Joins(d.Users.Posts).
+	OrderBy(d.Users.ID, d.Users.Posts.T().ID).
+	WillScan(
+		d.ToSlice(d.Users, &users),
+		d.ToSliceMap(d.Users.Posts, d.Users.Posts.T().AuthorID, &postsMap),
+	).
+	Load(ctx, db)
 fmt.Printf("%#+v\n", users)
 //=> []mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x2, Name:"bar"}, mdl.User{ID:0x3, Name:"foo"}}
 fmt.Printf("%#+v\n", postsMap)
