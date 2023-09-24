@@ -209,6 +209,7 @@ func init() {
 {{range .Tables}}
 type Table{{.Name}} struct {
 	*geq.TableBase
+	relshipsSet bool
 	{{range .Fields -}}
 	{{.Name}} *geq.Column[{{.Type}}]
 	{{end -}}
@@ -230,12 +231,16 @@ func New{{.Name}}(alias string) *Table{{.Name}} {
 }
 
 func (t *Table{{.Name}}) InitRelships()  {
+	if t.relshipsSet {
+		return
+	}
 	{{range .Relships -}}
 	func() {
 		r := New{{.MapperR.Name}}("{{.MapperR.DbName}}")
 		t.{{.RelName}} = geq.NewRelship(r, t.{{.FieldL}}, r.{{.FieldR}})
 	}()
 	{{end -}}
+	t.relshipsSet = true
 }
 func (t *Table{{.Name}}) FieldPtrs(r *{{.RowName}}) []any {
 	return []any{ {{- range .Fields}} &r.{{.Name}}, {{end -}} }

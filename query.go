@@ -36,6 +36,7 @@ type AnyTable interface {
 type Table[R any] interface {
 	RowMapper[R]
 	AnyTable
+	InitRelships()
 }
 
 type TableBase struct {
@@ -99,6 +100,11 @@ type Relship[T Table[R], R, C any] struct {
 
 func NewRelship[T Table[R], R, C any](tableR T, colL, colR *Column[C]) *Relship[T, R, C] {
 	return &Relship[T, R, C]{tableR: tableR, colL: colL, colR: colR}
+}
+
+func (r *Relship[T, R, C]) T() T {
+	r.tableR.InitRelships()
+	return r.tableR
 }
 
 func (r *Relship[T, R, C]) RightTableName() string {

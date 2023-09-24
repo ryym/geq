@@ -21,8 +21,9 @@ func init() {
 
 type TableUsers struct {
 	*geq.TableBase
-	ID   *geq.Column[int64]
-	Name *geq.Column[string]
+	relshipsSet bool
+	ID          *geq.Column[int64]
+	Name        *geq.Column[string]
 }
 
 func NewUsers(alias string) *TableUsers {
@@ -37,6 +38,10 @@ func NewUsers(alias string) *TableUsers {
 }
 
 func (t *TableUsers) InitRelships() {
+	if t.relshipsSet {
+		return
+	}
+	t.relshipsSet = true
 }
 func (t *TableUsers) FieldPtrs(r *mdl.User) []any {
 	return []any{&r.ID, &r.Name}
@@ -47,10 +52,11 @@ func (t *TableUsers) As(alias string) *TableUsers {
 
 type TablePosts struct {
 	*geq.TableBase
-	ID       *geq.Column[int64]
-	AuthorID *geq.Column[int64]
-	Title    *geq.Column[string]
-	Author   *geq.Relship[*TableUsers, mdl.User, int64]
+	relshipsSet bool
+	ID          *geq.Column[int64]
+	AuthorID    *geq.Column[int64]
+	Title       *geq.Column[string]
+	Author      *geq.Relship[*TableUsers, mdl.User, int64]
 }
 
 func NewPosts(alias string) *TablePosts {
@@ -66,10 +72,14 @@ func NewPosts(alias string) *TablePosts {
 }
 
 func (t *TablePosts) InitRelships() {
+	if t.relshipsSet {
+		return
+	}
 	func() {
 		r := NewUsers("users")
 		t.Author = geq.NewRelship(r, t.AuthorID, r.ID)
 	}()
+	t.relshipsSet = true
 }
 func (t *TablePosts) FieldPtrs(r *mdl.Post) []any {
 	return []any{&r.ID, &r.AuthorID, &r.Title}
@@ -80,6 +90,7 @@ func (t *TablePosts) As(alias string) *TablePosts {
 
 type TableTransactions struct {
 	*geq.TableBase
+	relshipsSet bool
 	ID          *geq.Column[uint32]
 	UserID      *geq.Column[uint32]
 	Amount      *geq.Column[int32]
@@ -102,6 +113,10 @@ func NewTransactions(alias string) *TableTransactions {
 }
 
 func (t *TableTransactions) InitRelships() {
+	if t.relshipsSet {
+		return
+	}
+	t.relshipsSet = true
 }
 func (t *TableTransactions) FieldPtrs(r *mdl.Transaction) []any {
 	return []any{&r.ID, &r.UserID, &r.Amount, &r.Description, &r.CreatedAt}

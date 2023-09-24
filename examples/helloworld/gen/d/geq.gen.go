@@ -22,9 +22,10 @@ func init() {
 
 type TableUsers struct {
 	*geq.TableBase
-	ID    *geq.Column[uint64]
-	Name  *geq.Column[string]
-	Posts *geq.Relship[*TablePosts, mdl.Post, uint64]
+	relshipsSet bool
+	ID          *geq.Column[uint64]
+	Name        *geq.Column[string]
+	Posts       *geq.Relship[*TablePosts, mdl.Post, uint64]
 }
 
 func NewUsers(alias string) *TableUsers {
@@ -39,10 +40,14 @@ func NewUsers(alias string) *TableUsers {
 }
 
 func (t *TableUsers) InitRelships() {
+	if t.relshipsSet {
+		return
+	}
 	func() {
 		r := NewPosts("posts")
 		t.Posts = geq.NewRelship(r, t.ID, r.AuthorID)
 	}()
+	t.relshipsSet = true
 }
 func (t *TableUsers) FieldPtrs(r *mdl.User) []any {
 	return []any{&r.ID, &r.Name}
@@ -53,11 +58,12 @@ func (t *TableUsers) As(alias string) *TableUsers {
 
 type TablePosts struct {
 	*geq.TableBase
-	ID        *geq.Column[uint64]
-	Title     *geq.Column[string]
-	AuthorID  *geq.Column[uint64]
-	Published *geq.Column[bool]
-	Author    *geq.Relship[*TableUsers, mdl.User, uint64]
+	relshipsSet bool
+	ID          *geq.Column[uint64]
+	Title       *geq.Column[string]
+	AuthorID    *geq.Column[uint64]
+	Published   *geq.Column[bool]
+	Author      *geq.Relship[*TableUsers, mdl.User, uint64]
 }
 
 func NewPosts(alias string) *TablePosts {
@@ -74,10 +80,14 @@ func NewPosts(alias string) *TablePosts {
 }
 
 func (t *TablePosts) InitRelships() {
+	if t.relshipsSet {
+		return
+	}
 	func() {
 		r := NewUsers("users")
 		t.Author = geq.NewRelship(r, t.AuthorID, r.ID)
 	}()
+	t.relshipsSet = true
 }
 func (t *TablePosts) FieldPtrs(r *mdl.Post) []any {
 	return []any{&r.ID, &r.Title, &r.AuthorID, &r.Published}
@@ -88,8 +98,9 @@ func (t *TablePosts) As(alias string) *TablePosts {
 
 type TableCountries struct {
 	*geq.TableBase
-	ID   *geq.Column[uint32]
-	Name *geq.Column[string]
+	relshipsSet bool
+	ID          *geq.Column[uint32]
+	Name        *geq.Column[string]
 }
 
 func NewCountries(alias string) *TableCountries {
@@ -104,6 +115,10 @@ func NewCountries(alias string) *TableCountries {
 }
 
 func (t *TableCountries) InitRelships() {
+	if t.relshipsSet {
+		return
+	}
+	t.relshipsSet = true
 }
 func (t *TableCountries) FieldPtrs(r *mdl.Country) []any {
 	return []any{&r.ID, &r.Name}
@@ -114,9 +129,10 @@ func (t *TableCountries) As(alias string) *TableCountries {
 
 type TableCities struct {
 	*geq.TableBase
-	ID        *geq.Column[uint64]
-	Name      *geq.Column[string]
-	CountryID *geq.Column[uint32]
+	relshipsSet bool
+	ID          *geq.Column[uint64]
+	Name        *geq.Column[string]
+	CountryID   *geq.Column[uint32]
 }
 
 func NewCities(alias string) *TableCities {
@@ -132,6 +148,10 @@ func NewCities(alias string) *TableCities {
 }
 
 func (t *TableCities) InitRelships() {
+	if t.relshipsSet {
+		return
+	}
+	t.relshipsSet = true
 }
 func (t *TableCities) FieldPtrs(r *mdl.City) []any {
 	return []any{&r.ID, &r.Name, &r.CountryID}
