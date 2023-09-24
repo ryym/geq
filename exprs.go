@@ -158,7 +158,7 @@ func (e *concatExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 			v.appendExpr(w, cfg)
 		}
 	case StrConcatFunc:
-		fe := &funcExpr{name: "CONCAT", args: e.vals}
+		fe := &FuncExpr{name: "CONCAT", args: e.vals}
 		fe.appendExpr(w, cfg)
 	default:
 		panic(fmt.Sprintf("unknown string concat type: %v", stype))
@@ -183,15 +183,23 @@ func (e *inExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(")")
 }
 
-type funcExpr struct {
+type FuncExpr struct {
 	ops
-	name string
-	args []Expr
+	distinct bool
+	name     string
+	args     []Expr
 }
 
-func (e *funcExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+func (e *FuncExpr) Distinct() *FuncExpr {
+	return implOps(&FuncExpr{name: e.name, args: e.args, distinct: true})
+}
+
+func (e *FuncExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(e.name)
 	w.Write("(")
+	if e.distinct {
+		w.Write("DISTINCT ")
+	}
 	for i, arg := range e.args {
 		if i > 0 {
 			w.Write(", ")

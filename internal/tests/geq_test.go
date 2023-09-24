@@ -594,6 +594,20 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "distinct in aggregate functions",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.Select(
+					geq.Count(d.Users.ID).Distinct(),
+					geq.Max(d.Users.Name).Distinct(),
+				)
+				err = assertQuery(q, "SELECT COUNT(DISTINCT users.id), MAX(DISTINCT users.name)")
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select with grouping",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.SelectFrom(d.Users, d.Users.Name, geq.Max(d.Users.ID)).GroupBy(d.Users.Name)

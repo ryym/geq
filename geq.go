@@ -74,31 +74,31 @@ func Raw(sql string) *RawExpr {
 	return newRawExpr(sql)
 }
 
-func Func(name string, args ...any) AnonExpr {
+func Func(name string, args ...any) *FuncExpr {
 	exprs := make([]Expr, 0, len(args))
 	for _, arg := range args {
 		exprs = append(exprs, toExpr(arg))
 	}
-	return implOps(&funcExpr{name: name, args: exprs})
+	return implOps(&FuncExpr{name: name, args: exprs})
 }
 
-func Count(expr Expr) AnonExpr {
+func Count(expr Expr) *FuncExpr {
 	return Func("COUNT", expr)
 }
 
-func Sum(expr Expr) AnonExpr {
+func Sum(expr Expr) *FuncExpr {
 	return Func("SUM", expr)
 }
 
-func Min(expr Expr) AnonExpr {
+func Min(expr Expr) *FuncExpr {
 	return Func("MIN", expr)
 }
 
-func Max(expr Expr) AnonExpr {
+func Max(expr Expr) *FuncExpr {
 	return Func("MAX", expr)
 }
 
-func Avg(expr Expr) AnonExpr {
+func Avg(expr Expr) *FuncExpr {
 	return Func("AVG", expr)
 }
 
