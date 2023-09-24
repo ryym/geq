@@ -102,6 +102,14 @@ func NewRelship[T Table[R], R, C any](tableR T, colL, colR *Column[C]) *Relship[
 	return &Relship[T, R, C]{tableR: tableR, colL: colL, colR: colR}
 }
 
+func (r *Relship[T, R, C]) Selections() []Selection {
+	return r.tableR.Selections()
+}
+
+func (r *Relship[T, R, C]) FieldPtrs(row *R) []any {
+	return r.tableR.FieldPtrs(row)
+}
+
 func (r *Relship[T, R, C]) T() T {
 	r.tableR.InitRelships()
 	return r.tableR
