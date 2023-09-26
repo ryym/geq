@@ -22,6 +22,9 @@ type Expr interface {
 	IsNull() AnonExpr
 	IsNotNull() AnonExpr
 
+	And(e Expr) AnonExpr
+	Or(e Expr) AnonExpr
+
 	appendExpr(w *queryWriter, c *QueryConfig)
 }
 
@@ -206,6 +209,17 @@ func (e *FuncExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 		}
 		arg.appendExpr(w, cfg)
 	}
+	w.Write(")")
+}
+
+type parensExpr struct {
+	ops
+	expr Expr
+}
+
+func (e *parensExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
+	w.Write("(")
+	e.expr.appendExpr(w, cfg)
 	w.Write(")")
 }
 

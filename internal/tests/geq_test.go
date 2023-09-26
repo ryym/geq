@@ -480,6 +480,27 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "select logical expressions",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.Select(
+					d.Users.ID.IsNull().And(d.Users.Name.IsNotNull()),
+					d.Users.ID.Eq(5).Or(d.Users.ID.Eq(7)),
+					d.Users.ID.IsNotNull().And(
+						d.Users.ID.Eq(2).Or(d.Users.ID.Gt(4).And(d.Users.ID.Lt(8))),
+					),
+				)
+				err = assertQuery(q, sjoin(
+					"SELECT users.id IS NULL AND users.name IS NOT NULL,",
+					"users.id = ? OR users.id = ?,",
+					"users.id IS NOT NULL AND (users.id = ? OR users.id > ? AND users.id < ?)",
+				), 5, 7, 2, 4, 8)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select basic operations",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.Select(

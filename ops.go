@@ -148,3 +148,22 @@ func (o *ops) InAny(vals ...any) AnonExpr {
 		values:  vals,
 	})
 }
+
+func (o *ops) And(e Expr) AnonExpr {
+	if ie, ok := e.(*infixExpr); ok && ie.op == "OR" {
+		e = implOps(&parensExpr{expr: e})
+	}
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: e,
+		op:    "AND",
+	})
+}
+
+func (o *ops) Or(e Expr) AnonExpr {
+	return implOps(&infixExpr{
+		left:  o.expr,
+		right: e,
+		op:    "OR",
+	})
+}

@@ -255,12 +255,7 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 
 	if len(q.wheres) > 0 {
 		w.Write(" WHERE ")
-		for i, e := range q.wheres {
-			if i > 0 {
-				w.Write(" AND ")
-			}
-			e.appendExpr(w, cfg)
-		}
+		andAll(q.wheres...).appendExpr(w, cfg)
 	}
 
 	if len(q.groups) > 0 {
@@ -293,6 +288,14 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 		Query: w.String(),
 		Args:  w.Args,
 	}, nil
+}
+
+func andAll(exprs ...Expr) Expr {
+	e := exprs[0]
+	for i := 1; i < len(exprs); i++ {
+		e = e.And(exprs[i])
+	}
+	return e
 }
 
 func (q *Query[R]) Load(ctx context.Context, db QueryRunner) (recs []R, err error) {
