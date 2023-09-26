@@ -432,11 +432,8 @@ posts, err := geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).Load(ctx, 
 ### `Select` - Select arbitrary values
 
 ```go
-// Mainly used for sub queries.
-geq.SelectAs(&d.Hoge{
-    AuthorName: d.Users.Name,
-    IsPro: geq.Exists(geq.Select().From(d.Prof))
-}).From(d.Users).Where(
-    d.Users.ID.InAny(geq.Select(d.Posts.AuthorID).From(d.Posts)),
-).GroupBy(d.Users.Name)
+geq.SelectOnly(d.Users.ID).From(d.Users).Where(
+        // Mainly used for sub queries.
+        d.Users.ID.InAny(geq.Select(d.Posts.AuthorID).From(d.Posts)),
+)
 ```
