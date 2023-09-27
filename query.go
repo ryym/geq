@@ -165,7 +165,7 @@ type Query[R any] struct {
 	distinct   bool
 	selections []Selection
 	from       TableLike
-	innerJoins []joinClause
+	joins      []joinClause
 	wheres     []Expr
 	groups     []Expr
 	orders     []Expr // For now ASC only.
@@ -195,7 +195,25 @@ func (q *Query[R]) From(table TableLike) *Query[R] {
 
 func (q *Query[R]) InnerJoin(table TableLike, condition Expr) *Query[R] {
 	join := joinClause{mode: "INNER", table: table, condition: condition}
-	q.innerJoins = append(q.innerJoins, join)
+	q.joins = append(q.joins, join)
+	return q
+}
+
+func (q *Query[R]) LeftJoin(table TableLike, condition Expr) *Query[R] {
+	join := joinClause{mode: "LEFT", table: table, condition: condition}
+	q.joins = append(q.joins, join)
+	return q
+}
+
+func (q *Query[R]) RightJoin(table TableLike, condition Expr) *Query[R] {
+	join := joinClause{mode: "RIGHT", table: table, condition: condition}
+	q.joins = append(q.joins, join)
+	return q
+}
+
+func (q *Query[R]) CrossJoin(table TableLike) *Query[R] {
+	join := joinClause{mode: "CROSS", table: table, condition: nil}
+	q.joins = append(q.joins, join)
 	return q
 }
 
@@ -204,7 +222,7 @@ func (q *Query[R]) JoinRels(relships ...AnyRelship) *Query[R] {
 		join := rs.toJoinClause()
 		switch join.mode {
 		case "INNER":
-			q.innerJoins = append(q.innerJoins, join)
+			q.joins = append(q.joins, join)
 		default:
 			panic(fmt.Sprintf("unknown join mode: %s", join.mode))
 		}
@@ -260,14 +278,16 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 		q.from.appendTable(w, cfg)
 	}
 
-	if len(q.innerJoins) > 0 {
-		for _, j := range q.innerJoins {
+	if len(q.joins) > 0 {
+		for _, j := range q.joins {
 			w.Write(" ")
 			w.Write(j.mode)
 			w.Write(" JOIN ")
 			j.table.appendTable(w, cfg)
-			w.Write(" ON ")
-			j.condition.appendExpr(w, cfg)
+			if j.mode != "CROSS" {
+				w.Write(" ON ")
+				j.condition.appendExpr(w, cfg)
+			}
 		}
 	}
 

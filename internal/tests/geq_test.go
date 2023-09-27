@@ -753,6 +753,75 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "left join",
+			data: `
+                INSERT INTO users VALUES (4, 'no-posts-user');
+            `,
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectOnly(d.Users.ID).From(d.Users).LeftJoin(
+					d.Posts,
+					d.Posts.AuthorID.Eq(d.Users.ID),
+				).Where(d.Posts.ID.IsNull())
+				err = assertQuery(q, sjoin(
+					"SELECT users.id FROM users",
+					"LEFT JOIN posts ON posts.author_id = users.id",
+					"WHERE posts.id IS NULL",
+				))
+				if err != nil {
+					return err
+				}
+				userIDs, err := q.Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				err = assertEqual(userIDs, []int64{4})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			name: "right join",
+			data: `
+                INSERT INTO users VALUES (4, 'no-posts-user');
+            `,
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectOnly(d.Users.ID).Distinct().From(d.Posts).RightJoin(
+					d.Users,
+					d.Users.ID.Eq(d.Posts.AuthorID),
+				).Where(d.Posts.ID.IsNull())
+				err = assertQuery(q, sjoin(
+					"SELECT DISTINCT users.id FROM posts",
+					"RIGHT JOIN users ON users.id = posts.author_id",
+					"WHERE posts.id IS NULL",
+				))
+				if err != nil {
+					return err
+				}
+				userIDs, err := q.Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				err = assertEqual(userIDs, []int64{4})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			name: "cross join",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectOnly(d.Users.ID).From(d.Users).CrossJoin(d.Posts)
+				err = assertQuery(q, "SELECT users.id FROM users CROSS JOIN posts")
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "build insert query by values and value maps",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.InsertInto(d.Users).
