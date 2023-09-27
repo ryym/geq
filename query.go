@@ -149,6 +149,15 @@ type joinClause struct {
 	condition Expr
 }
 
+type Orderer interface {
+	order() orderItem
+}
+
+type orderItem struct {
+	order string
+	expr  Expr
+}
+
 type AnyQuery interface {
 	Build() (*BuiltQuery, error)
 	BuildWith(cfg *QueryConfig) (*BuiltQuery, error)
@@ -168,7 +177,7 @@ type Query[R any] struct {
 	joins      []joinClause
 	wheres     []Expr
 	groups     []Expr
-	orders     []Expr // For now ASC only.
+	orders     []Orderer
 	limit      uint
 	args       []any
 }
@@ -240,7 +249,7 @@ func (q *Query[R]) GroupBy(exprs ...Expr) *Query[R] {
 	return q
 }
 
-func (q *Query[R]) OrderBy(orders ...Expr) *Query[R] {
+func (q *Query[R]) OrderBy(orders ...Orderer) *Query[R] {
 	q.orders = orders
 	return q
 }
@@ -308,11 +317,15 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 
 	if len(q.orders) > 0 {
 		w.Write(" ORDER BY ")
-		for i, e := range q.orders {
+		for i, o := range q.orders {
 			if i > 0 {
 				w.Write(", ")
 			}
-			e.appendExpr(w, cfg)
+			oi := o.order()
+			oi.expr.appendExpr(w, cfg)
+			if oi.order == "DESC" {
+				w.Write(" DESC")
+			}
 		}
 	}
 

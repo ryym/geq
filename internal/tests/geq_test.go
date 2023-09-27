@@ -763,6 +763,32 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "order by desc",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectFrom(d.Posts).OrderBy(d.Posts.AuthorID.Desc(), d.Posts.ID.Asc())
+				err = assertQuery(q, sjoin(
+					"SELECT posts.id, posts.author_id, posts.title FROM posts",
+					"ORDER BY posts.author_id DESC, posts.id",
+				))
+				if err != nil {
+					return err
+				}
+				posts, err := q.Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				ids := make([][2]int64, 0, len(posts))
+				for _, p := range posts {
+					ids = append(ids, [2]int64{p.AuthorID, p.ID})
+				}
+				err = assertEqual(ids, [][2]int64{{3, 4}, {3, 5}, {3, 6}, {2, 3}, {1, 1}, {1, 2}})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "build insert query by values and value maps",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.InsertInto(d.Users).

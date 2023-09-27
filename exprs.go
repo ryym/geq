@@ -25,6 +25,9 @@ type Expr interface {
 	And(e Expr) AnonExpr
 	Or(e Expr) AnonExpr
 
+	Asc() Orderer
+	Desc() Orderer
+
 	appendExpr(w *queryWriter, c *QueryConfig)
 }
 

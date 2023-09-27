@@ -167,3 +167,29 @@ func (o *ops) Or(e Expr) AnonExpr {
 		op:    "OR",
 	})
 }
+
+func (o *ops) order() orderItem {
+	return o.Asc().order()
+}
+
+type orderer struct {
+	item orderItem
+}
+
+func (o *orderer) order() orderItem {
+	return o.item
+}
+
+func (o *ops) Asc() Orderer {
+	return &orderer{item: orderItem{
+		order: "ASC",
+		expr:  o.expr,
+	}}
+}
+
+func (o *ops) Desc() Orderer {
+	return &orderer{item: orderItem{
+		order: "DESC",
+		expr:  o.expr,
+	}}
+}
