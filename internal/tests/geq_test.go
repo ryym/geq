@@ -334,7 +334,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			run: func(db *sql.Tx) (err error) {
 				var posts []mdl.Post
 				var userMap map[int64]mdl.User
-				q := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID)
+				q := geq.SelectFrom(d.Posts).JoinRels(d.Posts.Author).OrderBy(d.Posts.ID)
 				err = q.WillScan(
 					geq.ToSlice(d.Posts, &posts),
 					geq.ToMap(d.Posts.Author, d.Posts.Author.T().ID, &userMap),
@@ -448,7 +448,7 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 		{
 			name: "select with join using relationship",
 			run: func(db *sql.Tx) (err error) {
-				q := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.AuthorID)
+				q := geq.SelectFrom(d.Posts).JoinRels(d.Posts.Author).OrderBy(d.Posts.AuthorID)
 				err = assertQuery(q, sjoin(
 					"SELECT posts.id, posts.author_id, posts.title FROM posts",
 					"INNER JOIN users AS posts_users ON posts.author_id = posts_users.id",

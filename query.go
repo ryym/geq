@@ -193,7 +193,7 @@ func (q *Query[R]) From(table TableLike) *Query[R] {
 	return q
 }
 
-func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
+func (q *Query[R]) JoinRels(relships ...AnyRelship) *Query[R] {
 	for _, rs := range relships {
 		join := rs.toJoinClause()
 		switch join.mode {
