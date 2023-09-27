@@ -724,6 +724,35 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "inner join",
+			data: `
+                INSERT INTO users VALUES (4, 'no-posts-user');
+            `,
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectOnly(d.Users.ID).From(d.Users).Distinct().InnerJoin(
+					d.Posts,
+					d.Posts.Title.LikePrefix(geq.Concat("user", d.Users.ID)),
+				).OrderBy(d.Users.ID)
+				err = assertQuery(q, sjoin(
+					"SELECT DISTINCT users.id FROM users",
+					"INNER JOIN posts ON posts.title LIKE ? || users.id || '%'",
+					"ORDER BY users.id",
+				), "user")
+				if err != nil {
+					return err
+				}
+				userIDs, err := q.Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				err = assertEqual(userIDs, []int64{1, 2, 3})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "build insert query by values and value maps",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.InsertInto(d.Users).

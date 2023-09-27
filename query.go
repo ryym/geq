@@ -193,6 +193,12 @@ func (q *Query[R]) From(table TableLike) *Query[R] {
 	return q
 }
 
+func (q *Query[R]) InnerJoin(table TableLike, condition Expr) *Query[R] {
+	join := joinClause{mode: "INNER", table: table, condition: condition}
+	q.innerJoins = append(q.innerJoins, join)
+	return q
+}
+
 func (q *Query[R]) JoinRels(relships ...AnyRelship) *Query[R] {
 	for _, rs := range relships {
 		join := rs.toJoinClause()
