@@ -88,8 +88,7 @@ type TypedSelection[F any] interface {
 }
 
 type AnyRelship interface {
-	TableLike
-	JoinColumns() (left Expr, right Expr)
+	toJoinClause() joinClause
 }
 
 type Relship[T Table[R], R, C any] struct {
@@ -119,12 +118,12 @@ func (r *Relship[T, R, C]) T() T {
 	return r.tableR
 }
 
-func (r *Relship[T, R, C]) RightTableName() string {
-	return r.tableR.TableName()
-}
-
-func (r *Relship[T, R, C]) JoinColumns() (left Expr, right Expr) {
-	return r.colL, r.colR
+func (r *Relship[T, R, C]) toJoinClause() joinClause {
+	return joinClause{
+		mode:      "INNER",
+		table:     r.tableR,
+		condition: r.colL.Eq(r.colR),
+	}
 }
 
 func (r *Relship[T, R, C]) In(recs []R) Expr {
@@ -144,6 +143,12 @@ func (r *Relship[T, R, C]) In(recs []R) Expr {
 	return r.colL.In(vals)
 }
 
+type joinClause struct {
+	mode      string
+	table     TableLike
+	condition Expr
+}
+
 type AnyQuery interface {
 	Build() (*BuiltQuery, error)
 	BuildWith(cfg *QueryConfig) (*BuiltQuery, error)
@@ -160,7 +165,7 @@ type Query[R any] struct {
 	distinct   bool
 	selections []Selection
 	from       TableLike
-	innerJoins []AnyRelship // For now.
+	innerJoins []joinClause
 	wheres     []Expr
 	groups     []Expr
 	orders     []Expr // For now ASC only.
@@ -189,7 +194,15 @@ func (q *Query[R]) From(table TableLike) *Query[R] {
 }
 
 func (q *Query[R]) Joins(relships ...AnyRelship) *Query[R] {
-	q.innerJoins = append(q.innerJoins, relships...)
+	for _, rs := range relships {
+		join := rs.toJoinClause()
+		switch join.mode {
+		case "INNER":
+			q.innerJoins = append(q.innerJoins, join)
+		default:
+			panic(fmt.Sprintf("unknown join mode: %s", join.mode))
+		}
+	}
 	return q
 }
 
@@ -242,14 +255,13 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	}
 
 	if len(q.innerJoins) > 0 {
-		for _, r := range q.innerJoins {
-			w.Write(" INNER JOIN ")
-			r.appendTable(w, cfg)
+		for _, j := range q.innerJoins {
+			w.Write(" ")
+			w.Write(j.mode)
+			w.Write(" JOIN ")
+			j.table.appendTable(w, cfg)
 			w.Write(" ON ")
-			colL, colR := r.JoinColumns()
-			colL.appendExpr(w, cfg)
-			w.Write(" = ")
-			colR.appendExpr(w, cfg)
+			j.condition.appendExpr(w, cfg)
 		}
 	}
 
