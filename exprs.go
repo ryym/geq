@@ -37,8 +37,8 @@ type AnonExpr interface {
 }
 
 type Aliased interface {
-	Expr() Expr
-	Alias() string
+	getExpr() Expr
+	getAlias() string
 }
 
 type aliased struct {
@@ -46,12 +46,12 @@ type aliased struct {
 	alias string
 }
 
-func (a *aliased) Expr() Expr    { return a.expr }
-func (a *aliased) Alias() string { return a.alias }
+func (a *aliased) getExpr() Expr    { return a.expr }
+func (a *aliased) getAlias() string { return a.alias }
 
 type AnyColumn interface {
 	Expr
-	ColumnName() string
+	getColumnName() string
 }
 
 type Column[F any] struct {
@@ -64,7 +64,7 @@ func NewColumn[F any](tableName, columnName string) *Column[F] {
 	return implOps(&Column[F]{tableName: tableName, columnName: columnName})
 }
 
-func (c *Column[F]) ColumnName() string {
+func (c *Column[F]) getColumnName() string {
 	return c.columnName
 }
 

@@ -29,8 +29,8 @@ type TableLike interface {
 
 type AnyTable interface {
 	TableLike
-	TableName() string
-	Columns() []AnyColumn
+	getTableName() string
+	getColumns() []AnyColumn
 }
 
 type Table[R any] interface {
@@ -58,11 +58,11 @@ func NewTableBase(tableName string, alias string, columns []AnyColumn, sels []Se
 	}
 }
 
-func (t *TableBase) TableName() string {
+func (t *TableBase) getTableName() string {
 	return t.tableName
 }
 
-func (t *TableBase) Columns() []AnyColumn {
+func (t *TableBase) getColumns() []AnyColumn {
 	return t.columns
 }
 
@@ -79,8 +79,8 @@ func (t *TableBase) appendTable(w *queryWriter, cfg *QueryConfig) {
 }
 
 type Selection interface {
-	Expr() Expr
-	Alias() string
+	getExpr() Expr
+	getAlias() string
 }
 
 type TypedSelection[F any] interface {
@@ -275,8 +275,8 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 		if i > 0 {
 			w.Write(", ")
 		}
-		sel.Expr().appendExpr(w, cfg)
-		alias := sel.Alias()
+		sel.getExpr().appendExpr(w, cfg)
+		alias := sel.getAlias()
 		if alias != "" {
 			w.Printf(" AS %s", alias)
 		}
@@ -390,11 +390,11 @@ func (t *QueryTable[R]) TableName() string {
 	return t.alias
 }
 
-func (t *QueryTable[R]) Expr() Expr {
+func (t *QueryTable[R]) getExpr() Expr {
 	return t.query
 }
 
-func (t *QueryTable[R]) Alias() string {
+func (t *QueryTable[R]) getAlias() string {
 	return t.alias
 }
 

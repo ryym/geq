@@ -47,7 +47,7 @@ func (q *UpdateQuery) Build() (bq *BuiltQuery, err error) {
 func (q *UpdateQuery) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	w := newQueryWriter()
 	w.Write("UPDATE ")
-	w.Write(cfg.dialect.Ident(q.table.TableName()))
+	w.Write(cfg.dialect.Ident(q.table.getTableName()))
 	w.Write(" SET ")
 
 	if len(q.valueMap) == 0 {
@@ -55,14 +55,14 @@ func (q *UpdateQuery) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	}
 
 	setWritten := false
-	for _, c := range q.table.Columns() {
+	for _, c := range q.table.getColumns() {
 		if setWritten {
 			w.Write(", ")
 		}
 		v, ok := q.valueMap[c]
 		if ok {
 			setWritten = true
-			w.Write(cfg.dialect.Ident(c.ColumnName()))
+			w.Write(cfg.dialect.Ident(c.getColumnName()))
 			w.Write(" = ")
 			v.appendExpr(w, cfg)
 		}

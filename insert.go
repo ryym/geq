@@ -49,7 +49,7 @@ func (q *InsertQuery) Build() (bq *BuiltQuery, err error) {
 
 func (q *InsertQuery) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	w := newQueryWriter()
-	w.Printf("INSERT INTO %s ", cfg.dialect.Ident(q.table.TableName()))
+	w.Printf("INSERT INTO %s ", cfg.dialect.Ident(q.table.getTableName()))
 
 	if len(q.valueMaps) == 0 {
 		return nil, errors.New("[geq.InsertInto] no values provided")
@@ -61,7 +61,7 @@ func (q *InsertQuery) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	}
 
 	columns := make([]AnyColumn, 0, valsLen)
-	for _, c := range q.table.Columns() {
+	for _, c := range q.table.getColumns() {
 		_, ok := q.valueMaps[0][c]
 		if ok {
 			columns = append(columns, c)
@@ -76,7 +76,7 @@ func (q *InsertQuery) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 		if i > 0 {
 			w.Write(", ")
 		}
-		w.Write(col.ColumnName())
+		w.Write(col.getColumnName())
 	}
 	w.Write(") VALUES ")
 
