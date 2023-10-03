@@ -437,3 +437,17 @@ geq.SelectOnly(d.Users.ID).From(d.Users).Where(
         d.Users.ID.InAny(geq.Select(d.Posts.AuthorID).From(d.Posts)),
 )
 ```
+
+---
+
+## Retrieval patterns
+
+- `SelectFrom` or `SelectAs`
+    - `LoadRows`
+    - `Load`
+    - `AsMap`
+    - `AsSliceMap`
+- `SelectOnly`
+- `SelectVia`
+- `SelectScan`
+- `Select` (sub query)
