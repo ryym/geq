@@ -451,3 +451,56 @@ geq.SelectOnly(d.Users.ID).From(d.Users).Where(
 - `SelectVia`
 - `SelectScan`
 - `Select` (sub query)
+
+### Laod rows as slice, map, or `*sql.Rows`
+
+#### Slice
+
+```go
+users, err := geq.SelectFrom(d.Users).OrderBy(d.Users.ID).Load(ctx, db)
+fmt.Printf("%#+v\n", users)
+//=> []mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x2, Name:"bar"}, mdl.User{ID:0x3, Name:"foo"}}
+```
+
+#### Map
+
+```go
+userMap, err := geq.AsMap(d.Users.ID, geq.SelectFrom(d.Users)).Load(ctx, db)
+fmt.Printf("%#+v\n", userMap)
+//=> map[uint64]mdl.User{0x1:mdl.User{ID:0x1, Name:"foo"}, 0x2:mdl.User{ID:0x2, Name:"bar"}, 0x3:mdl.User{ID:0x3, Name:"foo"}}
+```
+
+#### Map of slices
+
+```go
+usersMap, err := geq.AsSliceMap(d.Users.Name, geq.SelectFrom(d.Users)).Load(ctx, db)
+fmt.Printf("%#+v\n", usersMap)
+//=> map[string][]mdl.User{"bar":[]mdl.User{mdl.User{ID:0x2, Name:"bar"}}, "foo":[]mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x3, Name:"foo"}}}
+```
+
+#### `*sql.Rows`
+
+```go
+rows, err = geq.SelectFrom(d.Users).LoadRows(ctx, db)
+```
+
+#### Non-table rows
+
+All `SelectFrom` above can be replaced with `SelectAs` .
+
+```go
+stats, err := geq.SelectAs(&d.PostStats{
+	AuthorID: d.Posts.AuthorID,
+	PostCount: geq.Count(d.Posts.ID),
+}).From(d.Posts).GroupBy(d.Posts.AuthorID).Load(ctx, db)
+```
+
+### Load single values
+
+You can retrieve a slice of single value by `SelectOnly` .
+
+```go
+userIDs, err := geq.SelectOnly(d.Users.ID).OrderBy(d.Users.ID).Load(ctx, db)
+
+// Currently non-column expressions are not supported.
+// _, _ = geq.SelectOnly(geq.Count(d.Users.ID)).From(d.Users)
