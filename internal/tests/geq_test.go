@@ -540,6 +540,32 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "handle expression precedences",
+			run: func(db *sql.Tx) (err error) {
+				a, b := geq.Raw("3"), geq.Raw("5")
+				q := geq.Select(
+					a.Mlt(b).Add(a),
+					a.Mlt(b.Add(a)),
+					a.Add(b).Mlt(b),
+					geq.Parens(a.Add(b)).Mlt(b),
+					a.Eq(b).And(b.Eq(a)),
+					a.Add(b).Gt(b.Eq(a)),
+				)
+				err = assertQuery(q, sjoin(
+					"SELECT 3 * 5 + 3,",
+					"3 * (5 + 3),",
+					"3 + 5 * 5,",
+					"(3 + 5) * 5,",
+					"3 = 5 AND 5 = 3,",
+					"3 + 5 > (5 = 3)",
+				))
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select distinct",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.SelectOnly(d.Posts.AuthorID).Distinct().From(d.Posts).OrderBy(d.Posts.AuthorID)

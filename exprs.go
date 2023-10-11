@@ -28,8 +28,22 @@ type Expr interface {
 	Asc() Orderer
 	Desc() Orderer
 
+	getPrecedence() int
 	appendExpr(w *queryWriter, c *QueryConfig)
 }
+
+// expression precedence
+const (
+	_ int = iota
+	prcdOr
+	prcdAnd
+	prcdLowExpr
+	prcdEqual
+	prcdLessGreater
+	prcdSum
+	prcdProduct
+	prcdValue
+)
 
 type AnonExpr interface {
 	Expr
@@ -58,6 +72,10 @@ type Column[F any] struct {
 	ops
 	tableName  string
 	columnName string
+}
+
+func (c *Column[F]) getPrecedence() int {
+	return prcdValue
 }
 
 func NewColumn[F any](tableName, columnName string) *Column[F] {
@@ -102,6 +120,10 @@ type nullExpr struct {
 	ops
 }
 
+func (e *nullExpr) getPrecedence() int {
+	return prcdValue
+}
+
 func (e *nullExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write("NULL")
 }
@@ -111,33 +133,56 @@ type litExpr struct {
 	val any
 }
 
+func (e *litExpr) getPrecedence() int {
+	return prcdValue
+}
+
 func (e *litExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(cfg.dialect.Placeholder("", w.Args), e.val)
 }
 
 type infixExpr struct {
 	ops
-	op    string
-	left  Expr
-	right Expr
+	op         string
+	left       Expr
+	right      Expr
+	precedence int
+}
+
+func (e *infixExpr) getPrecedence() int {
+	return e.precedence
 }
 
 func (e *infixExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	e.left.appendExpr(w, cfg)
 	w.Printf(" %s ", e.op)
+	// Wrap the right side expression by parentheses if necessary.
+	//   a.Mlt(b).Add(c) //=> a * b + c
+	//   a.Mlt(b.Add(c)) //=> a * (b + c)
+	// On the other hand, the left side expression does not be wrapped.
+	//   a.Add(b).Mlt(c) //=> a + b * c
+	// Because the code and the generated expression match, making it less likely to cause confusion.
+	if e.getPrecedence() > e.right.getPrecedence() {
+		e.right = Parens(e.right)
+	}
 	e.right.appendExpr(w, cfg)
 }
 
 type suffixExpr struct {
 	ops
-	op  string
-	val Expr
+	op         string
+	val        Expr
+	precedence int
 }
 
 func (e *suffixExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	e.val.appendExpr(w, cfg)
 	w.Write(" ")
 	w.Write(e.op)
+}
+
+func (e *suffixExpr) getPrecedence() int {
+	return e.precedence
 }
 
 type concatExpr struct {
@@ -151,6 +196,10 @@ func newConcatExpr(vals ...any) *concatExpr {
 		exprs = append(exprs, toExpr(v))
 	}
 	return implOps(&concatExpr{vals: exprs})
+}
+
+func (e *concatExpr) getPrecedence() int {
+	return prcdValue
 }
 
 func (e *concatExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
@@ -177,6 +226,10 @@ type inExpr struct {
 	values  []any
 }
 
+func (e *inExpr) getPrecedence() int {
+	return prcdLowExpr
+}
+
 func (e *inExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	e.operand.appendExpr(w, cfg)
 	w.Write(" IN (")
@@ -194,6 +247,10 @@ type FuncExpr struct {
 	distinct bool
 	name     string
 	args     []Expr
+}
+
+func (e *FuncExpr) getPrecedence() int {
+	return prcdValue
 }
 
 func (e *FuncExpr) Distinct() *FuncExpr {
@@ -226,6 +283,10 @@ func (e *parensExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {
 	w.Write(")")
 }
 
+func (e *parensExpr) getPrecedence() int {
+	return prcdValue
+}
+
 type RawExpr struct {
 	ops
 	sql string
@@ -233,6 +294,10 @@ type RawExpr struct {
 
 func newRawExpr(sql string) *RawExpr {
 	return implOps(&RawExpr{sql: sql})
+}
+
+func (e *RawExpr) getPrecedence() int {
+	return prcdValue
 }
 
 func (e *RawExpr) appendExpr(w *queryWriter, cfg *QueryConfig) {

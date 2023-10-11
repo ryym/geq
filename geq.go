@@ -66,6 +66,10 @@ func Null() AnonExpr {
 	return implOps(&nullExpr{})
 }
 
+func Parens(expr Expr) AnonExpr {
+	return implOps(&parensExpr{expr: expr})
+}
+
 func Concat(vals ...any) AnonExpr {
 	return newConcatExpr(vals...)
 }

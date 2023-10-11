@@ -188,6 +188,10 @@ func newQuery[R any](mapper RowMapper[R]) *Query[R] {
 	return q
 }
 
+func (q *Query[R]) getPrecedence() int {
+	return prcdValue
+}
+
 func (q *Query[R]) As(alias string) *QueryTable[R] {
 	return &QueryTable[R]{query: q, alias: alias}
 }
