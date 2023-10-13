@@ -61,7 +61,10 @@ func parseGeqConfig(pkg *packages.Package, fileNames []string, configKeys []stri
 						if ok {
 							return nil, fmt.Errorf("duplicate config %s in %s", key, fileName)
 						}
-						m[key] = readGeqConfigValue(key, c.Text)
+						v, ok := readGeqConfigValue(key, c.Text)
+						if ok {
+							m[key] = v
+						}
 					}
 				}
 			}
@@ -70,13 +73,13 @@ func parseGeqConfig(pkg *packages.Package, fileNames []string, configKeys []stri
 	return m, nil
 }
 
-func readGeqConfigValue(key, line string) string {
+func readGeqConfigValue(key, line string) (string, bool) {
 	prefix := "//" + key
 	if !strings.HasPrefix(line, prefix) {
-		return ""
+		return "", false
 	}
 	rest := line[len(prefix):]
-	return strings.TrimSpace(rest)
+	return strings.TrimSpace(rest), true
 }
 
 func buildGoCode(name string, codeTmpl string, data any) (src []byte, err error) {

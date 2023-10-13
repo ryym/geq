@@ -1,6 +1,6 @@
 package reports
 
-//geq:package .
+//geq:outdir .
 
 type GeqMappers struct {
 	PostStats     PostStat
