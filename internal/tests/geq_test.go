@@ -607,6 +607,23 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "select with grouping and having",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectFrom(d.Users, d.Users.Name, geq.Max(d.Users.ID)).
+					GroupBy(d.Users.Name).
+					Having(geq.Count(d.Users.ID).Gt(1))
+				err = assertQuery(q, sjoin(
+					"SELECT users.name, MAX(users.id) FROM users",
+					"GROUP BY users.name",
+					"HAVING COUNT(users.id) > ?",
+				), 1)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select with limit",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.SelectFrom(d.Users, d.Users.ID).Limit(2)

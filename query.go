@@ -177,6 +177,7 @@ type Query[R any] struct {
 	joins      []joinClause
 	wheres     []Expr
 	groups     []Expr
+	havings    []Expr
 	orders     []Orderer
 	limit      uint
 	args       []any
@@ -253,6 +254,11 @@ func (q *Query[R]) GroupBy(exprs ...Expr) *Query[R] {
 	return q
 }
 
+func (q *Query[R]) Having(exprs ...Expr) *Query[R] {
+	q.havings = append(q.havings, exprs...)
+	return q
+}
+
 func (q *Query[R]) OrderBy(orders ...Orderer) *Query[R] {
 	q.orders = orders
 	return q
@@ -312,6 +318,16 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 	if len(q.groups) > 0 {
 		w.Write(" GROUP BY ")
 		for i, e := range q.groups {
+			if i > 0 {
+				w.Write(", ")
+			}
+			e.appendExpr(w, cfg)
+		}
+	}
+
+	if len(q.havings) > 0 {
+		w.Write(" HAVING ")
+		for i, e := range q.havings {
 			if i > 0 {
 				w.Write(", ")
 			}
