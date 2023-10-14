@@ -180,6 +180,7 @@ type Query[R any] struct {
 	havings    []Expr
 	orders     []Orderer
 	limit      uint
+	offset     uint
 	args       []any
 }
 
@@ -269,6 +270,11 @@ func (q *Query[R]) Limit(n uint) *Query[R] {
 	return q
 }
 
+func (q *Query[R]) Offset(n uint) *Query[R] {
+	q.offset = n
+	return q
+}
+
 func (q *Query[R]) Build() (bq *BuiltQuery, err error) {
 	cfg := &QueryConfig{dialect: defaultDialect}
 	return q.BuildWith(cfg)
@@ -351,6 +357,10 @@ func (q *Query[R]) BuildWith(cfg *QueryConfig) (bq *BuiltQuery, err error) {
 
 	if q.limit > 0 {
 		w.Printf(" LIMIT %d", q.limit)
+	}
+
+	if q.offset > 0 {
+		w.Printf(" OFFSET %d", q.offset)
 	}
 
 	// Check w.errs

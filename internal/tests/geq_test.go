@@ -635,6 +635,17 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
+			name: "select with offset",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.SelectFrom(d.Users, d.Users.ID).Offset(2)
+				err = assertQuery(q, "SELECT users.id FROM users OFFSET 2")
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			name: "select from sub query",
 			run: func(db *sql.Tx) (err error) {
 				q := geq.Select(geq.Raw("t.id"), geq.Raw("t.title")).From(geq.SelectFrom(d.Posts).As("t"))
