@@ -4,6 +4,12 @@
 
 Yet another SQL query builder for Go, with moderate type safety powered by generics and code generation.
 
+```go
+q := geq.SelectFrom(d.Users).Where(d.Users.Name.Eq("foo")).OrderBy(d.Users.ID)
+users, err := q.Load(ctx, db)
+fmt.Println(users, err)
+```
+
 ## Features
 
 - SQL friendly (query builder rather than ORM)
@@ -332,7 +338,9 @@ q := geq.SelectAs(&d.PostStats{
 	AuthorID: d.Posts.AuthorID,
 	PostCount: geq.Count(d.Posts.ID),
 }).From(d.Posts).GroupBy(d.Posts.AuthorID)
-stats, err := q.Load(ctx, db) // stats: []mdl.PostStat
+
+// stats: []mdl.PostStat
+stats, err := q.Load(ctx, db)
 ```
 
 Or when you want to select single values, use `SelectOnly` .
@@ -346,11 +354,11 @@ userIDs, err := geq.SelectOnly(d.Users.ID).OrderBy(d.Users.ID).Load(ctx, db)
 
 You can retrieve rows in various way by combining them:
 
-- Specify row type ( `User`, `int`, etc )
+- Specify row type
     - `SelectFrom` ... table record
     - `SelectAs` ... non-table record
     - `SelectOnly` ... single value
-- Specify data structure ( slice, map, etc )
+- Specify data structure
     - `query.Load` ... slice of rows
     - `AsMap(key, query).Load` ... map of rows
     - `AsSliceMap(key, query).Load` ... map of slice of rows
@@ -384,6 +392,7 @@ You can also retrieve multiple results at once by scanning:
 ```go
 var posts []mdl.Post
 var userMap map[int64]mdl.User
+
 err := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID).WillScan(
 	geq.ToSlice(d.Posts, &posts),
 	geq.ToMap(d.Posts.Author, d.Posts.Author.T().ID, &userMap),
