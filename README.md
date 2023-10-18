@@ -260,8 +260,8 @@ Instead, you can load relevant records in two ways:
 ```go
 var posts []mdl.Post
 var userMap map[int64]mdl.User
-q := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID)
-err = q.WillScan(
+
+err := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID).WillScan(
 	geq.ToSlice(d.Posts, &posts),
 	geq.ToMap(d.Posts.Author, d.Posts.Author.T().ID, &userMap),
 ).Load(ctx, db)
@@ -279,6 +279,7 @@ for _, p := range posts {
 
 ```go
 users, err := geq.SelectFrom(d.Users).OrderBy(d.Users.ID).Limit(50).Load(ctx, db)
+
 postsMap, err := geq.AsSliceMap(
 	d.Posts.ID,
 	geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).OrderBy(d.Posts.ID),
@@ -341,166 +342,90 @@ Or when you want to select single values, use `SelectOnly` .
 userIDs, err := geq.SelectOnly(d.Users.ID).OrderBy(d.Users.ID).Load(ctx, db)
 ```
 
-## Result mapping patterns
+## Data retrieval patterns
 
-### `Load` - Load as slice
+You can retrieve rows in various way by combining them:
+
+- Specify row type ( `User`, `int`, etc )
+    - `SelectFrom` ... table record
+    - `SelectAs` ... non-table record
+    - `SelectOnly` ... single value
+- Specify data structure ( slice, map, etc )
+    - `query.Load` ... slice of rows
+    - `AsMap(key, query).Load` ... map of rows
+    - `AsSliceMap(key, query).Load` ... map of slice of rows
+
+Examples:
 
 ```go
+// []User, error
 users, err := geq.SelectFrom(d.Users).OrderBy(d.Users.ID).Load(ctx, db)
-fmt.Printf("%#+v\n", users)
-//=> []mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x2, Name:"bar"}, mdl.User{ID:0x3, Name:"foo"}}
-```
 
-### `AsMap(key, query).Load` - Load as map
-
-```go
-userMap, err := geq.AsMap(d.Users.ID, geq.SelectFrom(d.Users)).Load(ctx, db)
-fmt.Printf("%#+v\n", userMap)
-//=> map[uint64]mdl.User{0x1:mdl.User{ID:0x1, Name:"foo"}, 0x2:mdl.User{ID:0x2, Name:"bar"}, 0x3:mdl.User{ID:0x3, Name:"foo"}}
-```
-
-### `AsSliceMap(key, query).Load` - Load as map of slices
-
-```go
-usersMap, err := geq.AsSliceMap(d.Users.Name, geq.SelectFrom(d.Users)).Load(ctx, db)
-fmt.Printf("%#+v\n", usersMap)
-//=> map[string][]mdl.User{"bar":[]mdl.User{mdl.User{ID:0x2, Name:"bar"}}, "foo":[]mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x3, Name:"foo"}}}
-```
-
-### `LoadRows` - Load as `*sql.Rows`
-
-```go
-rows, err = geq.SelectFrom(d.Users).LoadRows(ctx, db)
-```
-
-### `WillScan(scans...).Load` - Scan into multiple results
-
-```go
-var users []mdl.User
-var postsMap map[uint64][]mdl.Post
-err := geq.
-	SelectFrom(d.Users).
-	Joins(d.Users.Posts).
-	OrderBy(d.Users.ID, d.Users.Posts.T().ID).
-	WillScan(
-		d.ToSlice(d.Users, &users),
-		d.ToSliceMap(d.Users.Posts, d.Users.Posts.T().AuthorID, &postsMap),
-	).
-	Load(ctx, db)
-fmt.Printf("%#+v\n", users)
-//=> []mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x2, Name:"bar"}, mdl.User{ID:0x3, Name:"foo"}}
-fmt.Printf("%#+v\n", postsMap)
-//=. map[uint64][]mdl.Post{0x1:[]mdl.Post{mdl.Post{ID:0x1, AuthorID:0x1, Title:"user1-post1"}, mdl.Post{ID:0x2, AuthorID:0x1, Title:"user1-post2"}}, 0x2:[]mdl.Post{mdl.Post{ID:0x3, AuthorID:0x2, Title:"user2-post1"}}, 0x3:[]mdl.Post{mdl.Post{ID:0x4, AuthorID:0x3, Title:"user3-post1"}}}
-```
-
-## `SELECT` patterns
-
-### `SelectFrom` - Select records from table
-
-```go
-users, err := geq.SelectFrom(d.Users).Load(ctx, db)
-```
-
-### `SelectAs` - Select non-table record results
-
-```go
+// []PostStat, error
 stats, err := geq.SelectAs(&d.PostStats{
 	AuthorID: d.Posts.AuthorID,
 	PostCount: geq.Count(d.Posts.ID),
 }).From(d.Posts).GroupBy(d.Posts.AuthorID).Load(ctx, db)
+
+// map[uint64]User, error
+userMap, err := geq.AsMap(d.Users.ID, geq.SelectFrom(d.Users)).Load(ctx, db)
+
+// map[uint64][]string, error
+namesMap, err := geq.AsSliceMap(
+	d.Users.ID,
+	geq.SelectOnly(d.Users.Name).OrderBy(d.Users.Name),
+).Load(ctx, db)
 ```
 
-### `SelectOnly` - Select single values
+### Retrieve multiple results
+
+You can also retrieve multiple results at once by scanning:
 
 ```go
-userIDs, err := geq.SelectOnly(d.Users.ID).OrderBy(d.Users.ID).Load(ctx, db)
+var posts []mdl.Post
+var userMap map[int64]mdl.User
+err := geq.SelectFrom(d.Posts).Joins(d.Posts.Author).OrderBy(d.Posts.ID).WillScan(
+	geq.ToSlice(d.Posts, &posts),
+	geq.ToMap(d.Posts.Author, d.Posts.Author.T().ID, &userMap),
+).Load(ctx, db)
 
-// Currently non-column expressions are not supported.
-// _, _ = geq.SelectOnly(geq.Count(d.Users.ID)).From(d.Users)
+for _, p := range posts {
+	author := userMap[p.AuthorID]
+	fmt.Println(p, author)
+}
 ```
 
-### `SelectVia` - Select records via table relationships
+### Other utilities
+
+`LoadRows` - Load as `*sql.Rows`:
 
 ```go
-users, err := geq.SelectFrom(d.Users)
-posts, err := geq.SelectVia(users, d.Posts, d.Posts.Author).Load(ctx, db)
-
-// The above query is a shorthand of this query:
-posts, err := geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).Load(ctx, db)
+// *sql.Rows, error
+rows, err = geq.SelectFrom(d.Users).LoadRows(ctx, db)
 ```
 
-### `Select` - Select arbitrary values
+`Select` - Use sub queries:
 
 ```go
-geq.SelectOnly(d.Users.ID).From(d.Users).Where(
-        // Mainly used for sub queries.
-        d.Users.ID.InAny(geq.Select(d.Posts.AuthorID).From(d.Posts)),
+geq.SelectFrom(d.Users).Where(
+	d.Users.ID.InAny(geq.Select(d.Posts.AuthorID).From(d.Posts)),
 )
 ```
 
----
-
-## Retrieval patterns
-
-- `SelectFrom` or `SelectAs`
-    - `LoadRows`
-    - `Load`
-    - `AsMap`
-    - `AsSliceMap`
-- `SelectOnly`
-- `SelectVia`
-- `SelectScan`
-- `Select` (sub query)
-
-### Laod rows as slice, map, or `*sql.Rows`
-
-#### Slice
+`SelectVia` - Filter by prefetched rows via table relationship:
 
 ```go
-users, err := geq.SelectFrom(d.Users).OrderBy(d.Users.ID).Load(ctx, db)
-fmt.Printf("%#+v\n", users)
-//=> []mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x2, Name:"bar"}, mdl.User{ID:0x3, Name:"foo"}}
+users, err := geq.SelectFrom(d.Users).Load(ctx, db)
+
+// Same as: geq.SelectFrom(d.Posts).Where(d.Posts.Author.In(users)).Load(ctx, db)
+posts, err := geq.SelectVia(users, d.Posts, d.Posts.Author).Load(ctx, db)
+
+configMap, err := geq.AsMap(
+	d.Configs.UserID,
+	geq.SelectVia(users, d.Configs, d.Configs.User),
+).Load(ctx, db)
+
+for _, u := range users {
+	fmt.Println(u.Name, configMap[u.ID])
+}
 ```
-
-#### Map
-
-```go
-userMap, err := geq.AsMap(d.Users.ID, geq.SelectFrom(d.Users)).Load(ctx, db)
-fmt.Printf("%#+v\n", userMap)
-//=> map[uint64]mdl.User{0x1:mdl.User{ID:0x1, Name:"foo"}, 0x2:mdl.User{ID:0x2, Name:"bar"}, 0x3:mdl.User{ID:0x3, Name:"foo"}}
-```
-
-#### Map of slices
-
-```go
-usersMap, err := geq.AsSliceMap(d.Users.Name, geq.SelectFrom(d.Users)).Load(ctx, db)
-fmt.Printf("%#+v\n", usersMap)
-//=> map[string][]mdl.User{"bar":[]mdl.User{mdl.User{ID:0x2, Name:"bar"}}, "foo":[]mdl.User{mdl.User{ID:0x1, Name:"foo"}, mdl.User{ID:0x3, Name:"foo"}}}
-```
-
-#### `*sql.Rows`
-
-```go
-rows, err = geq.SelectFrom(d.Users).LoadRows(ctx, db)
-```
-
-#### Non-table rows
-
-All `SelectFrom` above can be replaced with `SelectAs` .
-
-```go
-stats, err := geq.SelectAs(&d.PostStats{
-	AuthorID: d.Posts.AuthorID,
-	PostCount: geq.Count(d.Posts.ID),
-}).From(d.Posts).GroupBy(d.Posts.AuthorID).Load(ctx, db)
-```
-
-### Load single values
-
-You can retrieve a slice of single value by `SelectOnly` .
-
-```go
-userIDs, err := geq.SelectOnly(d.Users.ID).OrderBy(d.Users.ID).Load(ctx, db)
-
-// Currently non-column expressions are not supported.
-// _, _ = geq.SelectOnly(geq.Count(d.Users.ID)).From(d.Users)
