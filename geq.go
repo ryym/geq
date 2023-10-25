@@ -62,6 +62,10 @@ func Update(table AnyTable) *UpdateQuery {
 	return newUpdateQuery(table)
 }
 
+func DeleteFrom(table AnyTable) *DeleteQuery {
+	return newDeleteQuery(table)
+}
+
 func Null() AnonExpr {
 	return implOps(&nullExpr{})
 }

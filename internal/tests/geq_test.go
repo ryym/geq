@@ -931,5 +931,28 @@ func runIntegrationTest(t *testing.T, db *sql.DB) {
 				return nil
 			},
 		},
+		{
+			name: "delete records",
+			run: func(db *sql.Tx) (err error) {
+				q := geq.DeleteFrom(d.Users).Where(d.Users.ID.In([]int64{1, 3}))
+				err = assertQuery(q, "DELETE FROM users WHERE users.id IN (?, ?)", int64(1), int64(3))
+				if err != nil {
+					return err
+				}
+				_, err = q.Exec(ctx, db)
+				if err != nil {
+					return err
+				}
+				ids, err := geq.SelectOnly(d.Users.ID).From(d.Users).OrderBy(d.Users.ID).Load(ctx, db)
+				if err != nil {
+					return err
+				}
+				err = assertEqual(ids, []int64{2})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+		},
 	})
 }
